@@ -401,7 +401,7 @@ describe('Stock Movement Controller', () => {
           .send({
             type: 'IN',
             quantity: 25,
-            productId: 99999, // Non-existent product
+            productId: 'non-existent-id-12345', // Non-existent product
             reason: 'Purchase',
           });
 

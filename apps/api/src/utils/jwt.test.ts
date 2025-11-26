@@ -45,8 +45,8 @@ describe('JWT Utility', () => {
     it('should generate different tokens for same payload', async () => {
       const token1 = generateToken(mockPayload);
 
-      // Wait a tiny bit to ensure different iat timestamp
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Wait 1 second to ensure different iat timestamp (JWT uses Unix timestamps in seconds)
+      await new Promise(resolve => setTimeout(resolve, 1100));
 
       const token2 = generateToken(mockPayload);
 

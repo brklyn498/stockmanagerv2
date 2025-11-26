@@ -236,6 +236,9 @@ describe('Auth Controller', () => {
         password: 'password123',
       });
 
+      // Wait 1 second for different timestamp
+      await new Promise(resolve => setTimeout(resolve, 1100));
+
       const response2 = await request(app).post('/auth/login').send({
         email: 'test@example.com',
         password: 'password123',
@@ -394,6 +397,9 @@ describe('Auth Controller', () => {
       const response1 = await request(app).post('/auth/refresh').send({
         refreshToken,
       });
+
+      // Wait 1 second for different timestamp
+      await new Promise(resolve => setTimeout(resolve, 1100));
 
       // Use the new refresh token
       const response2 = await request(app).post('/auth/refresh').send({

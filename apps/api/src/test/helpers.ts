@@ -9,20 +9,15 @@ export const prisma = new PrismaClient();
  * Clear all data from the test database
  */
 export async function clearDatabase() {
-  const tables = [
-    'stockMovement',
-    'orderItem',
-    'order',
-    'product',
-    'category',
-    'supplier',
-    'user',
-    'setting',
-  ];
-
-  for (const table of tables) {
-    await prisma.$executeRawUnsafe(`DELETE FROM "${table}";`);
-  }
+  // Use Prisma's deleteMany in correct order (children first)
+  await prisma.stockMovement.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.supplier.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.setting.deleteMany();
 }
 
 /**
@@ -55,7 +50,7 @@ export async function createTestAdmin(overrides: any = {}) {
 export async function createTestCategory(overrides: any = {}) {
   return prisma.category.create({
     data: {
-      name: overrides.name || faker.commerce.department(),
+      name: overrides.name || `${faker.commerce.department()}-${faker.string.alphanumeric(6)}`,
       description: overrides.description || faker.commerce.productDescription(),
       ...overrides,
     },
