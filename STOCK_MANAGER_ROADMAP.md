@@ -180,6 +180,63 @@ Start by telling me: (1) Current project status, (2) What was last completed, (3
 | **React Hook Form + Zod** | Form handling & validation |
 | **Recharts** | Dashboard charts |
 
+### 🎨 Design System: Neobrutalism
+
+**All UI must follow Neobrutalism design principles:**
+
+| Element | Style Rules |
+|---------|-------------|
+| **Borders** | Thick black borders (2-4px), no border-radius or minimal (4px max) |
+| **Shadows** | Hard offset shadows (4-8px), black color, no blur |
+| **Colors** | Bold, saturated colors - bright yellows, pinks, blues, greens |
+| **Backgrounds** | Solid colors, no gradients |
+| **Typography** | Bold, chunky fonts. Use Inter, Space Grotesk, or similar |
+| **Buttons** | Thick borders, hard shadows, slight translate on hover/active |
+| **Cards** | White/colored background, thick black border, hard shadow offset |
+| **Inputs** | Thick borders, no rounded corners, visible focus states |
+| **Layout** | Generous whitespace, clear visual hierarchy |
+
+**Tailwind Classes to Use:**
+```css
+/* Card */
+.neo-card {
+  @apply bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)];
+}
+
+/* Button Primary */
+.neo-btn {
+  @apply bg-yellow-400 border-4 border-black font-bold px-6 py-3 
+         shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
+         hover:translate-x-1 hover:translate-y-1 
+         hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] 
+         active:translate-x-2 active:translate-y-2 
+         active:shadow-none transition-all;
+}
+
+/* Input */
+.neo-input {
+  @apply border-4 border-black px-4 py-3 font-medium 
+         focus:outline-none focus:ring-4 focus:ring-yellow-400;
+}
+
+/* Badge */
+.neo-badge {
+  @apply px-3 py-1 border-2 border-black font-bold text-sm;
+}
+```
+
+**Color Palette:**
+- Primary: `#FACC15` (Yellow 400)
+- Secondary: `#A855F7` (Purple 500)
+- Accent 1: `#22D3EE` (Cyan 400)
+- Accent 2: `#FB7185` (Rose 400)
+- Success: `#4ADE80` (Green 400)
+- Warning: `#FB923C` (Orange 400)
+- Danger: `#F87171` (Red 400)
+- Background: `#FEF9C3` (Yellow 100) or `#FFFFFF`
+- Text: `#000000`
+- Borders: `#000000`
+
 ### Backend
 | Technology | Purpose |
 |------------|---------|
@@ -481,10 +538,21 @@ each major feature (auth, products, categories, etc.).
 **Commands for Claude Code:**
 ```
 In apps/web, set up React Router with protected routes. Create a layout component 
-with sidebar navigation and header. Set up TanStack Query for API calls with a 
-base API client using axios. Create Zustand store for auth state. Build reusable 
-UI components: Button, Input, Select, Table, Modal, Card, Badge. Use Tailwind CSS 
-for all styling. Commit and push after completing each page.
+with sidebar navigation and header - use Neobrutalism style (thick black borders, 
+hard shadows, bold colors). Set up TanStack Query for API calls with a base API 
+client using axios. Create Zustand store for auth state. 
+
+Build reusable UI components following Neobrutalism design from ROADMAP.md:
+- Button (thick border, hard shadow, translate on hover)
+- Input (thick border, no rounded corners)
+- Select (same style as input)
+- Table (thick borders, alternating bold colors)
+- Modal (hard shadow, thick border)
+- Card (white bg, black border, offset shadow)
+- Badge (thick border, bold colors for status)
+
+Use the color palette and Tailwind classes defined in the Design System section.
+Commit and push after completing each page.
 ```
 
 ---
@@ -518,7 +586,10 @@ for all styling. Commit and push after completing each page.
 Implement the Products page with full CRUD. Add TanStack Query hooks for all 
 product API calls. Create a DataTable component with sorting, filtering, and 
 pagination. Build the product form with React Hook Form and Zod validation. 
-Add stock level badges (red for low, yellow for near-low, green for normal). 
+Add stock level badges using Neobrutalism style:
+- Low stock: red background (#F87171), thick black border
+- Near-low: orange background (#FB923C), thick black border  
+- Normal: green background (#4ADE80), thick black border
 Commit and push.
 
 Then implement Stock Movements page with movement recording and history view.
@@ -542,11 +613,16 @@ Then implement Orders page with creation workflow and status updates.
 
 **Commands for Claude Code:**
 ```
-Build the Dashboard page with stat cards using the dashboard API endpoints. 
-Add Recharts for: stock value over time (line chart), category distribution 
-(pie chart), movement types breakdown (bar chart). Create an alerts section 
-for low stock products. Add quick action buttons for common tasks. 
-Commit and push.
+Build the Dashboard page with stat cards using Neobrutalism style (thick borders, 
+hard shadows, bold colors for each stat category). Use the dashboard API endpoints.
+
+Add Recharts with Neobrutalism styling:
+- Stock value over time (line chart) - thick lines, bold colors
+- Category distribution (pie chart) - use the bold color palette
+- Movement types breakdown (bar chart) - thick borders on bars
+
+Create an alerts section for low stock products using danger-colored neo cards.
+Add quick action buttons using the neo-btn style. Commit and push.
 ```
 
 ---
@@ -566,7 +642,8 @@ Commit and push.
 
 **Commands for Claude Code:**
 ```
-Add a global search modal (Cmd+K) that searches across all entities. 
+Add a global search modal (Cmd+K) with Neobrutalism styling - thick black border,
+hard shadow, bold input field. Search results should use neo-card style. 
 Implement CSV export for products and stock movements using a utility function.
 Add keyboard shortcuts using a custom hook. Create a print-friendly stock 
 report page. Commit and push.
