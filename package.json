@@ -1,0 +1,21 @@
+{
+  "name": "stockmanagerv2",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stock Manager v2 - Modern inventory management system",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "keywords": ["stock-management", "inventory", "typescript"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  }
+}
