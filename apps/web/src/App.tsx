@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import Categories from './pages/Categories'
 import Suppliers from './pages/Suppliers'
+import StockMovements from './pages/StockMovements'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient({
@@ -71,6 +72,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Suppliers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock-movements"
+            element={
+              <ProtectedRoute>
+                <StockMovements />
               </ProtectedRoute>
             }
           />
