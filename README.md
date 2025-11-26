@@ -20,7 +20,7 @@ A modern inventory management system built with a TypeScript monorepo architectu
 - Zod validation
 
 ### DevOps
-- pnpm workspace monorepo
+- npm workspace monorepo
 - ESLint + Prettier
 - TypeScript strict mode
 
@@ -40,7 +40,7 @@ stockmanagerv2/
 
 ### Prerequisites
 - Node.js v20+ (LTS)
-- pnpm (recommended) or npm
+- npm (comes with Node.js)
 
 ### Installation
 
@@ -52,20 +52,25 @@ cd stockmanagerv2
 
 2. Install dependencies:
 ```bash
-pnpm install
+npm install
+cd apps/web && npm install
+cd ../api && npm install
+cd ../../packages/shared && npm install
+cd ../..
 ```
 
 3. Set up the database:
 ```bash
 cd apps/api
-cp .env.example .env
-pnpm db:migrate
+npx prisma migrate dev
 cd ../..
 ```
 
 4. Start development servers:
 ```bash
-pnpm dev
+# In separate terminals:
+npm run dev:api    # Start API server
+npm run dev:web    # Start frontend
 ```
 
 This will start:
@@ -77,19 +82,20 @@ This will start:
 ### Available Scripts
 
 From root:
-- `pnpm dev` - Start all development servers
-- `pnpm build` - Build all packages
-- `pnpm lint` - Lint all packages
-- `pnpm format` - Format code with Prettier
+- `npm run dev:api` - Start API server
+- `npm run dev:web` - Start frontend
+- `npm run build` - Build all packages
+- `npm run lint` - Lint all packages
+- `npm run format` - Format code with Prettier
 
 From `apps/api`:
-- `pnpm dev` - Start API server with hot reload
-- `pnpm db:migrate` - Run database migrations
-- `pnpm db:studio` - Open Prisma Studio
+- `npm run dev` - Start API server with hot reload
+- `npx prisma migrate dev` - Run database migrations
+- `npx prisma studio` - Open Prisma Studio
 
 From `apps/web`:
-- `pnpm dev` - Start Vite dev server
-- `pnpm build` - Build for production
+- `npm run dev` - Start Vite dev server
+- `npm run build` - Build for production
 
 ## Database
 
@@ -98,7 +104,7 @@ This project uses SQLite for simplicity and portability. The database file is cr
 To view/edit the database:
 ```bash
 cd apps/api
-pnpm db:studio
+npx prisma studio
 ```
 
 ## Environment Variables
