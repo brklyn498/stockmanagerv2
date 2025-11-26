@@ -2,15 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Neobrutalism Card */
+  .neo-card {
+    @apply bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)];
+  }
+
+  /* Neobrutalism Button Primary */
+  .neo-btn {
+    @apply bg-yellow-400 border-4 border-black font-bold px-6 py-3
+           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
+           hover:translate-x-1 hover:translate-y-1
+           hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]
+           active:translate-x-2 active:translate-y-2
+           active:shadow-none transition-all cursor-pointer
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Neobrutalism Button Secondary */
+  .neo-btn-secondary {
+    @apply bg-purple-500 text-white border-4 border-black font-bold px-6 py-3
+           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
+           hover:translate-x-1 hover:translate-y-1
+           hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]
+           active:translate-x-2 active:translate-y-2
+           active:shadow-none transition-all cursor-pointer;
+  }
+
+  /* Neobrutalism Button Danger */
+  .neo-btn-danger {
+    @apply bg-red-400 text-white border-4 border-black font-bold px-6 py-3
+           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
+           hover:translate-x-1 hover:translate-y-1
+           hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]
+           active:translate-x-2 active:translate-y-2
+           active:shadow-none transition-all cursor-pointer;
+  }
+
+  /* Neobrutalism Input */
+  .neo-input {
+    @apply border-4 border-black px-4 py-3 font-medium w-full
+           focus:outline-none focus:ring-4 focus:ring-yellow-400
+           disabled:bg-gray-100 disabled:cursor-not-allowed;
+  }
+
+  /* Neobrutalism Select */
+  .neo-select {
+    @apply border-4 border-black px-4 py-3 font-medium w-full
+           focus:outline-none focus:ring-4 focus:ring-yellow-400
+           bg-white cursor-pointer;
+  }
+
+  /* Neobrutalism Badge */
+  .neo-badge {
+    @apply px-3 py-1 border-2 border-black font-bold text-sm inline-block;
+  }
+
+  .neo-badge-success {
+    @apply neo-badge bg-green-400;
+  }
+
+  .neo-badge-warning {
+    @apply neo-badge bg-orange-400;
+  }
+
+  .neo-badge-danger {
+    @apply neo-badge bg-red-400 text-white;
+  }
+
+  .neo-badge-info {
+    @apply neo-badge bg-cyan-400;
+  }
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(0, 0, 0, 0.87);
-  background-color: #ffffff;
-
+  color: #000000;
+  background-color: #FEF9C3;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
