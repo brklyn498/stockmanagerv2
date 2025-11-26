@@ -49,8 +49,8 @@
 - [x] Stock level indicators
 - [x] Categories management page
 - [x] Suppliers management page
-- [ ] Stock Movements page
-- [ ] Movement history view
+- [x] Stock Movements page
+- [x] Movement history view
 - [ ] Orders list page
 - [ ] Order creation workflow
 - [ ] Order status updates
@@ -98,11 +98,12 @@
 10. ✅ Seed script with sample categories and suppliers
 11. ✅ Categories management page with full CRUD
 12. ✅ Suppliers management page with full CRUD
+13. ✅ Stock Movements page with recording and history
+14. ✅ Movement type badges and color coding
 
 **Next tasks:**
-1. Create Stock Movements interface
-2. Build Orders interface
-3. Update Dashboard with real data
+1. Build Orders interface with workflow
+2. Update Dashboard with real data from API
 
 ---
 
@@ -145,8 +146,22 @@
     - Neobrutalism styling throughout
   - Added /categories and /suppliers routes to App.tsx
   - Successfully built frontend with no errors (273KB bundle)
+  - Built Stock Movements page with:
+    - Record stock movements (IN, OUT, ADJUSTMENT, RETURN, DAMAGED)
+    - Filter by product and movement type
+    - Pagination (20 items per page)
+    - Movement history with date, time, quantity, user tracking
+    - Color-coded quantity display (green for in, red for out)
+    - Type badges (Stock In, Stock Out, Adjustment, Return, Damaged)
+    - Comprehensive form with product dropdown, type, quantity, reason, reference
+    - Info panel explaining movement types
+    - Current stock display in product dropdown
+    - Auto-invalidates products cache on movement creation
+    - Neobrutalism styling throughout
+  - Added /stock-movements route to App.tsx
+  - Successfully built frontend with no errors (280KB bundle)
 - Blocked: None
-- Next: Build Stock Movements and Orders interfaces
+- Next: Build Orders interface and update Dashboard
 
 ### 2025-11-26 (Session 3 - Frontend Foundation)
 - Started: Phase 3 - Frontend development with Neobrutalism UI
