@@ -55,18 +55,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body
 
+    console.log(`[AUTH] Login attempt for: ${email}`)
+
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
+      console.log(`[AUTH] User not found: ${email}`)
       res.status(401).json({ error: 'Invalid credentials' })
       return
     }
 
+    console.log(`[AUTH] Comparing password for: ${email}`)
     const isValidPassword = await comparePassword(password, user.password)
     if (!isValidPassword) {
+      console.log(`[AUTH] Invalid password for: ${email}`)
       res.status(401).json({ error: 'Invalid credentials' })
       return
     }
 
+    console.log(`[AUTH] Generating tokens for: ${email}`)
     const token = generateToken({
       userId: user.id,
       email: user.email,
@@ -79,6 +85,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       role: user.role,
     })
 
+    console.log(`[AUTH] Login successful for: ${email}`)
     res.json({
       user: {
         id: user.id,
@@ -90,7 +97,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       refreshToken,
     })
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('[AUTH] Login error:', error)
     res.status(500).json({ error: 'Failed to login' })
   }
 }

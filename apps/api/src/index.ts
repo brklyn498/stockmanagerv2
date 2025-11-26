@@ -15,11 +15,20 @@ dotenv.config()
 const app = express()
 const PORT = process.env.API_PORT || 3001
 
+// Set timeout for all requests (30 seconds)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`)
+  req.setTimeout(30000)
+  res.setTimeout(30000)
+  next()
+})
+
 app.use(cors())
 app.use(express.json())
 
 // Health check
 app.get('/api/health', (_req, res) => {
+  console.log('[HEALTH] Health check requested')
   res.json({ status: 'ok', message: 'Stock Manager API v2' })
 })
 
@@ -35,6 +44,11 @@ app.use('/api/dashboard', dashboardRoutes)
 // Error handling middleware (must be last)
 app.use(errorHandler)
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 API server running on http://localhost:${PORT}`)
 })
+
+// Set server timeout to 30 seconds
+server.timeout = 30000
+server.keepAliveTimeout = 61000
+server.headersTimeout = 62000

@@ -65,7 +65,6 @@ export default function Products() {
     sku: '',
     name: '',
     description: '',
-    barcode: '',
     price: '',
     costPrice: '',
     quantity: '',
@@ -123,6 +122,10 @@ export default function Products() {
       setIsModalOpen(false)
       resetForm()
     },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || 'Failed to create product'
+      alert(errorMessage)
+    },
   })
 
   // Update product mutation
@@ -135,6 +138,10 @@ export default function Products() {
       setIsModalOpen(false)
       setEditingProduct(null)
       resetForm()
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || 'Failed to update product'
+      alert(errorMessage)
     },
   })
 
@@ -153,7 +160,6 @@ export default function Products() {
       sku: '',
       name: '',
       description: '',
-      barcode: '',
       price: '',
       costPrice: '',
       quantity: '',
@@ -173,7 +179,6 @@ export default function Products() {
         sku: product.sku,
         name: product.name,
         description: product.description || '',
-        barcode: product.barcode || '',
         price: product.price.toString(),
         costPrice: product.costPrice.toString(),
         quantity: product.quantity.toString(),
@@ -204,7 +209,6 @@ export default function Products() {
       sku: formData.sku,
       name: formData.name,
       description: formData.description || undefined,
-      barcode: formData.barcode || undefined,
       price: parseFloat(formData.price),
       costPrice: parseFloat(formData.costPrice),
       quantity: parseInt(formData.quantity),
@@ -451,27 +455,18 @@ export default function Products() {
             }
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Barcode"
-              value={formData.barcode}
-              onChange={e =>
-                setFormData({ ...formData, barcode: e.target.value })
-              }
-            />
-            <Select
-              label="Unit"
-              value={formData.unit}
-              onChange={e => setFormData({ ...formData, unit: e.target.value })}
-              options={[
-                { value: 'piece', label: 'Piece' },
-                { value: 'box', label: 'Box' },
-                { value: 'kg', label: 'Kilogram' },
-                { value: 'liter', label: 'Liter' },
-                { value: 'meter', label: 'Meter' },
-              ]}
-            />
-          </div>
+          <Select
+            label="Unit"
+            value={formData.unit}
+            onChange={e => setFormData({ ...formData, unit: e.target.value })}
+            options={[
+              { value: 'piece', label: 'Piece' },
+              { value: 'box', label: 'Box' },
+              { value: 'kg', label: 'Kilogram' },
+              { value: 'liter', label: 'Liter' },
+              { value: 'meter', label: 'Meter' },
+            ]}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input

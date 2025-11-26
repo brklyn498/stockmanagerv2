@@ -104,8 +104,18 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
     })
 
     res.status(201).json({ product })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create product error:', error)
+
+    // Handle Prisma unique constraint violation
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0] || 'field'
+      res.status(400).json({
+        error: `A product with this ${field} already exists. Please use a different ${field}.`
+      })
+      return
+    }
+
     res.status(500).json({ error: 'Failed to create product' })
   }
 }

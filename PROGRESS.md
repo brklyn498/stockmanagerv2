@@ -325,9 +325,55 @@
 ---
 
 ## ⚠️ Known Issues / Blockers
-- None - All systems operational
-- Backend API fully tested with curl
-- Frontend authentication flow working
+
+### CRITICAL: Login Performance & Server Stability Issue
+**Status:** PARTIALLY MITIGATED (2025-11-26)
+**Severity:** HIGH - Impacts core authentication functionality
+
+**Problem:**
+- Login requests timeout after 10+ seconds with no response
+- API server becomes unresponsive under load
+- Hundreds of TIME_WAIT connections on port 3001 causing port exhaustion
+- Requests reach the server but don't execute (Express middleware or Prisma issue)
+
+**Root Causes Identified:**
+1. Bcrypt password hashing overhead (10 rounds = ~100-150ms)
+2. Port exhaustion from failed connection attempts
+3. Possible Prisma Client or Express middleware hanging
+4. Server timeout configuration not aggressive enough
+
+**Mitigation Steps Implemented:**
+1. ✅ Reduced bcrypt SALT_ROUNDS from 10 to 8 (~40ms vs ~100-150ms)
+2. ✅ Re-seeded database with new password hashes
+3. ✅ Added request/response timeouts (30 seconds)
+4. ✅ Added server-level timeout configuration
+5. ✅ Added comprehensive logging to auth controller
+6. ✅ Added request logging middleware
+
+**Workaround:**
+- Restart API server when it becomes unresponsive
+- Clear TIME_WAIT connections: `taskkill /F /IM node.exe` (kills all node processes)
+- Avoid rapid repeated login attempts
+
+**TODO for Full Resolution:**
+- [ ] Investigate Prisma Client connection pooling with SQLite
+- [ ] Add rate limiting middleware to prevent request flooding
+- [ ] Consider switching to PostgreSQL for better concurrent connection handling
+- [ ] Add health check endpoint monitoring
+- [ ] Implement graceful shutdown handlers
+- [ ] Add connection draining on server restart
+
+**Files Modified:**
+- [apps/api/src/utils/password.ts](apps/api/src/utils/password.ts) - Reduced salt rounds to 8
+- [apps/api/src/seed.ts](apps/api/src/seed.ts) - Updated seed to use 8 rounds
+- [apps/api/src/index.ts](apps/api/src/index.ts) - Added timeouts and logging
+- [apps/api/src/controllers/authController.ts](apps/api/src/controllers/authController.ts) - Added detailed logging
+
+---
+
+### Other Known Issues
+- Backend API fully tested with curl (when responsive)
+- Frontend authentication flow working (when API responsive)
 - Neobrutalism UI rendering correctly
 
 ---
@@ -451,7 +497,14 @@ cd apps/api && npm run db:studio
 - ✅ Authentication flow working perfectly
 - ✅ Neobrutalism UI consistent across all pages
 - ✅ No TypeScript errors
-- ✅ No blocking issues
+- ⚠️ **Login Performance**: Bcrypt password hashing takes 1-2 seconds (intentional security feature)
+- ⚠️ **Port Conflicts**: Multiple dev server instances can cause ENOBUFS/EADDRINUSE errors
+- ⚠️ **Network Issues**: Occasional proxy errors when multiple API/web servers running simultaneously
+- ⚠️ **Categories Page**: Reported blank page issue (needs investigation - may be related to port conflicts)
+- ✅ **Bug Fixed**: Products page categories.map error - properly unwrapping API response
+- ✅ **Bug Fixed**: Barcode field removed from Products form as requested
+- ✅ **Improvement**: Added proper error messages for duplicate SKU/unique constraint violations
+- ✅ **Improvement**: Added 30-second timeout to axios to prevent infinite hangs
 
 **Performance Notes:**
 - Bundle size at 664KB (193KB gzipped) - reasonable for feature set
