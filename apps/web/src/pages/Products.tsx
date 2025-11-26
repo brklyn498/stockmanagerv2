@@ -15,6 +15,7 @@ import {
   TableHead,
   TableCell,
 } from '../components/Table'
+import { exportToCSV, formatProductsForExport } from '../utils/exportCSV'
 
 interface Product {
   id: string
@@ -226,6 +227,15 @@ export default function Products() {
     }
   }
 
+  const handleExport = () => {
+    if (products.length === 0) {
+      alert('No products to export')
+      return
+    }
+    const formattedData = formatProductsForExport(products)
+    exportToCSV(formattedData, 'products')
+  }
+
   const getStockBadge = (quantity: number, minStock: number) => {
     if (quantity === 0) {
       return <Badge variant="danger">Out of Stock</Badge>
@@ -252,7 +262,12 @@ export default function Products() {
             Manage your product inventory
           </p>
         </div>
-        <Button onClick={() => handleOpenModal()}>Add Product</Button>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={handleExport}>
+            Export CSV
+          </Button>
+          <Button onClick={() => handleOpenModal()}>Add Product</Button>
+        </div>
       </div>
 
       {/* Filters */}

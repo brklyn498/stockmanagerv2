@@ -15,6 +15,7 @@ import {
   TableHead,
   TableCell,
 } from '../components/Table'
+import { exportToCSV, formatMovementsForExport } from '../utils/exportCSV'
 
 interface StockMovement {
   id: string
@@ -129,6 +130,15 @@ export default function StockMovements() {
     createMutation.mutate(payload)
   }
 
+  const handleExport = () => {
+    if (movements.length === 0) {
+      alert('No movements to export')
+      return
+    }
+    const formattedData = formatMovementsForExport(movements)
+    exportToCSV(formattedData, 'stock_movements')
+  }
+
   const getTypeBadge = (type: string) => {
     const badges = {
       IN: <Badge variant="success">Stock In</Badge>,
@@ -154,7 +164,12 @@ export default function StockMovements() {
             Track all stock changes and inventory movements
           </p>
         </div>
-        <Button onClick={handleOpenModal}>Record Movement</Button>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={handleExport}>
+            Export CSV
+          </Button>
+          <Button onClick={handleOpenModal}>Record Movement</Button>
+        </div>
       </div>
 
       {/* Filters */}

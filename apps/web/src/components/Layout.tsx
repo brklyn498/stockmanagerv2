@@ -1,6 +1,9 @@
-import { Link, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import Button from './Button'
+import SearchModal from './SearchModal'
+import { useKeyboardShortcuts, getDefaultShortcuts } from '../hooks/useKeyboardShortcuts'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -8,7 +11,9 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   const navigation = [
     { name: 'Dashboard', path: '/' },
@@ -19,10 +24,21 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Orders', path: '/orders' },
   ]
 
+  // Setup keyboard shortcuts
+  const shortcuts = getDefaultShortcuts({
+    onSearch: () => setIsSearchOpen(true),
+    onNavigate: (path) => navigate(path),
+  })
+
+  useKeyboardShortcuts(shortcuts, true)
+
   const isActive = (path: string) => location.pathname === path
 
   return (
     <div className="min-h-screen flex bg-yellow-100">
+      {/* Global Search Modal */}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r-4 border-black p-6">
         <div className="mb-8">
@@ -30,6 +46,15 @@ export default function Layout({ children }: LayoutProps) {
             📦 Stock Manager
           </h1>
         </div>
+
+        {/* Search Button */}
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className="w-full mb-4 px-4 py-3 font-bold border-4 border-black bg-white hover:bg-yellow-100 transition-all text-left flex items-center justify-between"
+        >
+          <span>🔍 Search</span>
+          <span className="text-xs bg-gray-200 px-2 py-1 border-2 border-black">⌘K</span>
+        </button>
 
         <nav className="space-y-2">
           {navigation.map(item => (
