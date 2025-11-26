@@ -94,22 +94,24 @@ export default function Products() {
   })
 
   // Fetch categories
-  const { data: categories = [] } = useQuery({
+  const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const { data } = await api.get('/categories')
       return data
     },
   })
+  const categories = categoriesData?.categories || []
 
   // Fetch suppliers
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliersData } = useQuery({
     queryKey: ['suppliers'],
     queryFn: async () => {
       const { data } = await api.get('/suppliers')
       return data
     },
   })
+  const suppliers = suppliersData?.suppliers || []
 
   // Create product mutation
   const createMutation = useMutation({
