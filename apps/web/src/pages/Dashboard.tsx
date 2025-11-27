@@ -51,7 +51,7 @@ interface Movement {
 export default function Dashboard() {
   const navigate = useNavigate()
 
-  const { data: statsData, isLoading: statsLoading } = useQuery({
+  const { data: statsData, isLoading: statsLoading, isError: statsError, error: statsErrorDetails, refetch: refetchStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const response = await api.get('/dashboard/stats')
@@ -62,7 +62,7 @@ export default function Dashboard() {
     },
   })
 
-  const { data: lowStockData } = useQuery({
+  const { data: lowStockData, isError: lowStockError } = useQuery({
     queryKey: ['low-stock-alerts'],
     queryFn: async () => {
       const response = await api.get('/dashboard/low-stock')
@@ -70,7 +70,7 @@ export default function Dashboard() {
     },
   })
 
-  const { data: recentMovementsData } = useQuery({
+  const { data: recentMovementsData, isError: movementsError } = useQuery({
     queryKey: ['recent-movements'],
     queryFn: async () => {
       const response = await api.get('/dashboard/recent-movements')
@@ -119,33 +119,56 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* Connection Error Banner */}
+      {statsError && (
+        <div className="mb-6 bg-red-500 border-4 border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">⚠️</span>
+              <div>
+                <h3 className="text-white font-bold text-lg">Connection Error</h3>
+                <p className="text-white font-medium">
+                  Unable to load dashboard data. {statsErrorDetails instanceof Error ? statsErrorDetails.message : 'Please check your connection.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => refetchStats()}
+              className="neo-btn bg-white hover:bg-gray-100"
+            >
+              🔄 Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="bg-yellow-400">
           <h3 className="text-sm font-bold mb-2">Total Products</h3>
           <p className="text-4xl font-bold">
-            {statsLoading ? '...' : stats?.totalProducts || 0}
+            {statsLoading ? '...' : statsError ? '—' : stats?.totalProducts || 0}
           </p>
         </Card>
 
         <Card className="bg-cyan-400">
           <h3 className="text-sm font-bold mb-2">Low Stock Items</h3>
           <p className="text-4xl font-bold">
-            {statsLoading ? '...' : stats?.lowStockCount || 0}
+            {statsLoading ? '...' : statsError ? '—' : stats?.lowStockCount || 0}
           </p>
         </Card>
 
         <Card className="bg-purple-500 text-white">
           <h3 className="text-sm font-bold mb-2">Pending Orders</h3>
           <p className="text-4xl font-bold">
-            {statsLoading ? '...' : stats?.pendingOrdersCount || 0}
+            {statsLoading ? '...' : statsError ? '—' : stats?.pendingOrdersCount || 0}
           </p>
         </Card>
 
         <Card className="bg-rose-400">
           <h3 className="text-sm font-bold mb-2">Today's Movements</h3>
           <p className="text-4xl font-bold">
-            {statsLoading ? '...' : stats?.todayMovementsCount || 0}
+            {statsLoading ? '...' : statsError ? '—' : stats?.todayMovementsCount || 0}
           </p>
         </Card>
       </div>
@@ -294,10 +317,10 @@ export default function Dashboard() {
                     </td>
                     <td
                       className={`py-3 px-4 font-bold text-right ${movement.type === 'IN' ||
-                          movement.type === 'RETURN' ||
-                          movement.type === 'ADJUSTMENT'
-                          ? 'text-green-600'
-                          : 'text-red-600'
+                        movement.type === 'RETURN' ||
+                        movement.type === 'ADJUSTMENT'
+                        ? 'text-green-600'
+                        : 'text-red-600'
                         }`}
                     >
                       {movement.type === 'IN' ||

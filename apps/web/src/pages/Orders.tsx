@@ -189,6 +189,11 @@ export default function Orders() {
     resetForm()
   }
 
+  // Extract data early to use in handlers
+  const orders = ordersData?.orders || []
+  const totalPages = Math.ceil((ordersData?.total || 0) / limit)
+  const products = Array.isArray(productsData) ? productsData : (productsData?.products || [])
+
   const handleAddItem = () => {
     const product = products.find((p: Product) => p.id === currentItem.productId)
     if (!product || !currentItem.quantity) return
@@ -281,14 +286,22 @@ export default function Orders() {
     return badges[status as keyof typeof badges] || <Badge>{status}</Badge>
   }
 
-  const orders = ordersData?.orders || []
-  const totalPages = Math.ceil((ordersData?.total || 0) / limit)
-  const products = productsData?.products || []
-
   const calculateTotal = () => {
     return formData.items.reduce(
       (sum, item) => sum + item.quantity * item.unitPrice,
       0
+    )
+  }
+
+  // Loading state
+  if (ordersLoading) {
+    return (
+      <div>
+        <h1 className="text-4xl font-bold mb-8">Orders</h1>
+        <Card>
+          <p className="text-center py-8 font-medium">Loading orders...</p>
+        </Card>
+      </div>
     )
   }
 

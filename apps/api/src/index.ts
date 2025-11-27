@@ -11,6 +11,9 @@ import orderRoutes from './routes/orderRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
 import { errorHandler } from './middleware/errorHandler'
 import { setupSwagger } from './swagger'
+import { connectDatabase, disconnectDatabase } from './utils/db'
+import { prepareDatabase } from './utils/cleanup'
+import prisma from './utils/db'
 
 dotenv.config()
 
@@ -50,10 +53,27 @@ app.get('/', (_req, res) => {
   })
 })
 
-// Health check
-app.get('/api/health', (_req, res) => {
+// Health check with database connectivity
+app.get('/api/health', async (_req, res) => {
   console.log('[HEALTH] Health check requested')
-  res.json({ status: 'ok', message: 'Stock Manager API v2' })
+
+  try {
+    // Ping database to verify connection
+    await prisma.$queryRaw`SELECT 1`
+    res.json({
+      status: 'ok',
+      message: 'Stock Manager API v2',
+      database: 'connected'
+    })
+  } catch (error) {
+    console.error('[HEALTH] Database connection failed:', error)
+    res.status(503).json({
+      status: 'degraded',
+      message: 'Stock Manager API v2',
+      database: 'disconnected',
+      error: 'Database unavailable'
+    })
+  }
 })
 
 // API routes
@@ -69,14 +89,57 @@ app.use('/api/dashboard', dashboardRoutes)
 // Error handling middleware (must be last)
 app.use(errorHandler)
 
-const server = app.listen(PORT, () => {
-  console.log(`🚀 API server running on http://localhost:${PORT}`)
-})
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Prepare database (cleanup journal files, etc.)
+    prepareDatabase()
 
-// Set server timeout to 30 seconds
-server.timeout = 30000
-server.keepAliveTimeout = 61000
-server.headersTimeout = 62000
+    // Connect to database
+    await connectDatabase()
+
+    // Start HTTP server
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 API server running on http://localhost:${PORT}`)
+      console.log(`📊 API Documentation: http://localhost:${PORT}/api-docs`)
+    })
+
+    // Set server timeout to 30 seconds
+    server.timeout = 30000
+    server.keepAliveTimeout = 61000
+    server.headersTimeout = 62000
+
+    // Setup graceful shutdown handlers
+    setupShutdownHandlers(server)
+  } catch (error) {
+    console.error('❌ Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+// Graceful shutdown handler setup
+const setupShutdownHandlers = (server: any) => {
+  process.on('SIGTERM', async () => {
+    console.log('📡 SIGTERM signal received: closing HTTP server gracefully')
+    server.close(async () => {
+      console.log('✅ HTTP server closed')
+      await disconnectDatabase()
+      process.exit(0)
+    })
+  })
+
+  process.on('SIGINT', async () => {
+    console.log('📡 SIGINT signal received: closing HTTP server gracefully')
+    server.close(async () => {
+      console.log('✅ HTTP server closed')
+      await disconnectDatabase()
+      process.exit(0)
+    })
+  })
+}
+
+// Start the server
+startServer()
 
 // ============================================================================
 // CRASH-PROOFING: Global Error Handlers
@@ -101,22 +164,6 @@ process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) =>
   console.error('Timestamp:', new Date().toISOString())
   console.error('⚠️  Server is still running despite this rejection')
   // DO NOT exit: process.exit(1)
-})
-
-process.on('SIGTERM', () => {
-  console.log('📡 SIGTERM signal received: closing HTTP server gracefully')
-  server.close(() => {
-    console.log('✅ HTTP server closed')
-    process.exit(0)
-  })
-})
-
-process.on('SIGINT', () => {
-  console.log('📡 SIGINT signal received: closing HTTP server gracefully')
-  server.close(() => {
-    console.log('✅ HTTP server closed')
-    process.exit(0)
-  })
 })
 
 console.log('🛡️  Global error handlers installed - server is crash-proof')

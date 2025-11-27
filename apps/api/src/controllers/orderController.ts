@@ -90,9 +90,27 @@ export const getOrder = async (req: AuthRequest, res: Response): Promise<void> =
 
 export const createOrder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
+    // Demo mode: Get or create a demo user if no user is authenticated
+    let userId = req.user?.userId
+
+    if (!userId) {
+      // Find or create demo user for orders
+      let demoUser = await prisma.user.findFirst({
+        where: { email: 'admin@stockmanager.com' }
+      })
+
+      if (!demoUser) {
+        // Create demo user if doesn't exist
+        demoUser = await prisma.user.create({
+          data: {
+            name: 'Admin User',
+            email: 'admin@stockmanager.com',
+            password: 'demo', // Not used in demo mode
+          }
+        })
+      }
+
+      userId = demoUser.id
     }
 
     const { type, supplierId, notes, items } = req.body
@@ -114,7 +132,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
         supplierId,
         notes,
         totalAmount,
-        userId: req.user.userId,
+        userId,
         items: {
           create: items,
         },
@@ -156,9 +174,25 @@ export const updateOrderStatus = async (
 
     // If order is completed, update stock
     if (status === 'COMPLETED' && order.status !== 'COMPLETED') {
-      if (!req.user) {
-        res.status(401).json({ error: 'Unauthorized' })
-        return
+      // Demo mode: Get or create demo user
+      let userId = req.user?.userId
+
+      if (!userId) {
+        let demoUser = await prisma.user.findFirst({
+          where: { email: 'admin@stockmanager.com' }
+        })
+
+        if (!demoUser) {
+          demoUser = await prisma.user.create({
+            data: {
+              name: 'Admin User',
+              email: 'admin@stockmanager.com',
+              password: 'demo',
+            }
+          })
+        }
+
+        userId = demoUser.id
       }
 
       await prisma.$transaction(async tx => {
@@ -186,7 +220,7 @@ export const updateOrderStatus = async (
               reason: `Order ${order.orderNumber}`,
               reference: order.orderNumber,
               productId: item.productId,
-              userId: req.user.userId,
+              userId,
             },
           })
         }

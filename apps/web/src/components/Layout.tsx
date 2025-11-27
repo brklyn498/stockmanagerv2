@@ -54,6 +54,17 @@ export default function Layout({ children }: LayoutProps) {
           <span className="text-xs bg-gray-200 px-2 py-1 border-2 border-black">⌘K</span>
         </button>
 
+        {/* Dashboard Switcher */}
+        <button
+          onClick={() => {
+            const isDashboard2 = location.pathname === '/dashboard2'
+            navigate(isDashboard2 ? '/' : '/dashboard2')
+          }}
+          className="w-full mb-6 px-4 py-3 font-bold border-4 border-black bg-cyan-300 hover:bg-cyan-400 transition-all text-left shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+        >
+          {location.pathname === '/dashboard2' ? '📊 Classic Dashboard' : '🎨 Alternative Dashboard'}
+        </button>
+
         <nav className="space-y-2">
           {navigation.map(item => (
             <Link
