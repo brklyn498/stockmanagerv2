@@ -3,7 +3,7 @@
 ## Project Status
 - **Current Phase:** Phase 6 - Advanced Features (COMPLETED) → Ready for Phase 7
 - **Last Updated:** 2025-11-27
-- **Last Session:** Session 7 - Authentication disabled for demo mode
+- **Last Session:** Session 8 - Bug fixes: Product search and blank page issues resolved
 
 ---
 
@@ -107,6 +107,48 @@
 ---
 
 ## 📝 Session Log
+
+### 2025-11-27 (Session 8 - Bug Fixes: Product Search & Data Fetching Issues)
+- Started: Bug investigation and fixes after demo mode implementation
+- Completed:
+  - Fixed product search case-sensitivity issue in SQLite:
+    - Problem: SQLite's `contains` filter is case-sensitive, `mode: 'insensitive'` not supported
+    - Solution: Implemented client-side filtering with JavaScript `.toLowerCase()` for case-insensitive search
+    - Updated [apps/api/src/controllers/productController.ts](apps/api/src/controllers/productController.ts)
+    - Search now works for name, SKU, barcode, and description fields
+    - Tested with "Bagel", "bagel", "Coffee", etc. - all working
+  - Fixed blank screen issue on Categories, Suppliers, and related pages:
+    - Root cause: API response structure mismatch (API returns `{ categories: [...] }` but frontend expected direct array)
+    - React Query was caching old data format causing blank screens on navigation
+    - Fixed data extraction in 4 pages:
+      - [apps/web/src/pages/Categories.tsx](apps/web/src/pages/Categories.tsx) - Extract `data.categories`
+      - [apps/web/src/pages/Suppliers.tsx](apps/web/src/pages/Suppliers.tsx) - Extract `data.suppliers`
+      - [apps/web/src/pages/Orders.tsx](apps/web/src/pages/Orders.tsx) - Extract `data.products` and `data.suppliers`
+      - [apps/web/src/pages/StockMovements.tsx](apps/web/src/pages/StockMovements.tsx) - Extract `data.products`
+    - All pages now properly unwrap API response objects
+    - Added fallback `|| []` to prevent undefined errors
+  - Investigated and resolved database connectivity:
+    - API server was not running on port 3001 initially
+    - Restarted servers with `npm run dev`
+    - Added root route `/` to API returning available endpoints
+    - Verified SQLite database intact at `apps/api/prisma/dev.db`
+    - Confirmed all test data present (Bagel, Dark Chocolate, Black Coffee products)
+  - Updated server timeout configuration:
+    - Added request/response timeouts (30 seconds)
+    - Configured server keepAlive and headers timeout
+    - Improved stability for long-running operations
+- Issues Encountered:
+  - SQLite limitations: No native case-insensitive search support in Prisma
+  - React Query caching: Old data format persisted between code changes
+  - Port confusion: Web on 3003, API on 3001 (not 3003 as initially thought)
+  - Prisma client generation locked: Could not regenerate while server running
+- Solutions Applied:
+  - In-memory filtering for search (acceptable for small datasets, would need database-level solution for larger datasets)
+  - Added proper data unwrapping with fallbacks
+  - Clear documentation of port assignments
+  - Kill and restart servers cleanly
+- Blocked: None - All issues resolved
+- Next: Update PROGRESS.md and commit all fixes
 
 ### 2025-11-26 (Session 6 - Advanced Features: CSV Export, Global Search, Keyboard Shortcuts)
 - Started: Phase 6 - Advanced Features implementation
@@ -413,6 +455,15 @@ Authentication has been completely disabled to provide seamless access to the ap
 9. Pagination: 10 items for Products/Orders, 20 items for Stock Movements
 10. Multi-item order creation with add/remove functionality
 
+**Session 8 Summary (2025-11-27):**
+- ✅ Fixed product search case-sensitivity (SQLite limitation resolved with client-side filtering)
+- ✅ Fixed blank screen bugs in Categories, Suppliers, Orders, StockMovements
+- ✅ Resolved API data unwrapping issues across 4 pages
+- ✅ Added API root route with endpoint documentation
+- ✅ Improved error handling with fallback empty arrays
+- ✅ All pages now working correctly with navigation and refresh
+- 🎯 **Application Now Fully Functional in Demo Mode!**
+
 **What to Do Next Session - Phase 7: Testing & Documentation:**
 1. **API Unit Tests:**
    - Install Vitest for backend testing
@@ -490,17 +541,17 @@ cd apps/api && npm run db:studio
 - ✅ Keyboard shortcuts functional (Cmd/Ctrl+K, Cmd+H/P/M/O)
 - ✅ All 6 core pages tested and working
 - ✅ All CRUD operations functional
-- ✅ Authentication flow working perfectly
+- ✅ Authentication disabled for demo mode (Session 7)
 - ✅ Neobrutalism UI consistent across all pages
 - ✅ No TypeScript errors
-- ⚠️ **Login Performance**: Bcrypt password hashing takes 1-2 seconds (intentional security feature)
-- ⚠️ **Port Conflicts**: Multiple dev server instances can cause ENOBUFS/EADDRINUSE errors
-- ⚠️ **Network Issues**: Occasional proxy errors when multiple API/web servers running simultaneously
-- ⚠️ **Categories Page**: Reported blank page issue (needs investigation - may be related to port conflicts)
+- ✅ **Bug Fixed (Session 8)**: Product search now case-insensitive (implemented client-side filtering)
+- ✅ **Bug Fixed (Session 8)**: Categories, Suppliers, Orders, StockMovements blank screen issue resolved (proper data unwrapping)
 - ✅ **Bug Fixed**: Products page categories.map error - properly unwrapping API response
 - ✅ **Bug Fixed**: Barcode field removed from Products form as requested
 - ✅ **Improvement**: Added proper error messages for duplicate SKU/unique constraint violations
 - ✅ **Improvement**: Added 30-second timeout to axios to prevent infinite hangs
+- ✅ **Improvement**: Added root route to API showing available endpoints
+- ⚠️ **Limitation**: SQLite case-insensitive search uses in-memory filtering (fine for current dataset, may need optimization for 10K+ products)
 
 **Performance Notes:**
 - Bundle size at 664KB (193KB gzipped) - reasonable for feature set

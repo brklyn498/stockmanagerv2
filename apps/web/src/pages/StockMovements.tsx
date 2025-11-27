@@ -79,7 +79,7 @@ export default function StockMovements() {
     queryKey: ['products-all'],
     queryFn: async () => {
       const { data } = await api.get('/products?limit=1000')
-      return data
+      return data.products || []
     },
   })
 

@@ -26,6 +26,23 @@ app.use((req, res, next) => {
 app.use(cors())
 app.use(express.json())
 
+// Root route
+app.get('/', (_req, res) => {
+  res.json({
+    message: 'Stock Manager API v2',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      products: '/api/products',
+      categories: '/api/categories',
+      suppliers: '/api/suppliers',
+      orders: '/api/orders',
+      stockMovements: '/api/stock-movements',
+      dashboard: '/api/dashboard'
+    }
+  })
+})
+
 // Health check
 app.get('/api/health', (_req, res) => {
   console.log('[HEALTH] Health check requested')

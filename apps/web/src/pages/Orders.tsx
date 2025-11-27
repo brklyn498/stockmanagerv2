@@ -106,7 +106,7 @@ export default function Orders() {
     queryKey: ['products-all'],
     queryFn: async () => {
       const { data } = await api.get('/products?limit=1000')
-      return data
+      return data.products || []
     },
   })
 
@@ -115,7 +115,7 @@ export default function Orders() {
     queryKey: ['suppliers'],
     queryFn: async () => {
       const { data } = await api.get('/suppliers')
-      return data
+      return data.suppliers || []
     },
   })
 

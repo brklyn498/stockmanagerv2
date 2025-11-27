@@ -39,7 +39,7 @@ export default function Categories() {
     queryKey: ['categories'],
     queryFn: async () => {
       const { data } = await api.get('/categories')
-      return data
+      return data.categories || []
     },
   })
 

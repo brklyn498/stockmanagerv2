@@ -4,12 +4,21 @@ import { AuthRequest } from '../middleware/auth'
 
 export const getOrders = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { type, status } = req.query
+    const { type, status, search } = req.query
 
     const where: any = {}
 
     if (type) where.type = type
     if (status) where.status = status
+
+    // Add search functionality
+    if (search) {
+      where.OR = [
+        { orderNumber: { contains: search as string } },
+        { notes: { contains: search as string } },
+        { supplier: { name: { contains: search as string } } },
+      ]
+    }
 
     const orders = await prisma.order.findMany({
       where,

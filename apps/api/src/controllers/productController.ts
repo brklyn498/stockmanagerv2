@@ -19,13 +19,8 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       isActive: true,
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search as string } },
-        { sku: { contains: search as string } },
-        { barcode: { contains: search as string } },
-      ]
-    }
+    // No search filter in the where clause - we'll filter client-side for case-insensitive
+    const hasSearch = search && typeof search === 'string' && search.trim() !== ''
 
     if (categoryId) {
       where.categoryId = categoryId
@@ -35,19 +30,50 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       where.quantity = { lte: prisma.product.fields.minStock }
     }
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
+    // For case-insensitive search in SQLite, fetch all and filter in-memory
+    let products, total
+
+    if (hasSearch) {
+      const searchLower = (search as string).toLowerCase()
+
+      // Fetch all matching products (without search in where clause)
+      const allProducts = await prisma.product.findMany({
         where,
         include: {
           category: true,
           supplier: true,
         },
-        skip,
-        take: limitNum,
         orderBy: { createdAt: 'desc' },
-      }),
-      prisma.product.count({ where }),
-    ])
+      })
+
+      // Filter client-side for case-insensitive search
+      const filtered = allProducts.filter((p) => {
+        const nameMatch = p.name?.toLowerCase().includes(searchLower)
+        const skuMatch = p.sku?.toLowerCase().includes(searchLower)
+        const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower)
+        const descMatch = p.description?.toLowerCase().includes(searchLower)
+        return nameMatch || skuMatch || barcodeMatch || descMatch
+      })
+
+      // Apply pagination
+      total = filtered.length
+      products = filtered.slice(skip, skip + limitNum)
+    } else {
+      // No search - use normal Prisma query with pagination
+      ;[products, total] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          include: {
+            category: true,
+            supplier: true,
+          },
+          skip,
+          take: limitNum,
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.product.count({ where }),
+      ])
+    }
 
     res.json({
       products,
