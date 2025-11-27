@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import * as productController from '../controllers/productController'
 import { validate } from '../middleware/validate'
-import { authMiddleware } from '../middleware/auth'
 import { createProductSchema, updateProductSchema } from '../types/schemas'
 
 const router = Router()
 
-router.use(authMiddleware)
+// Auth disabled for demo purposes
+// router.use(authMiddleware)
 
 router.get('/', productController.getProducts)
 router.get('/low-stock', productController.getLowStockProducts)

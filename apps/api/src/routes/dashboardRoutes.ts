@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import * as dashboardController from '../controllers/dashboardController'
-import { authMiddleware } from '../middleware/auth'
 
 const router = Router()
 
-router.use(authMiddleware)
+// Auth disabled for demo purposes
+// router.use(authMiddleware)
 
 router.get('/stats', dashboardController.getStats)
 router.get('/low-stock', dashboardController.getLowStockAlerts)

@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../stores/authStore'
-import Button from './Button'
 import SearchModal from './SearchModal'
 import { useKeyboardShortcuts, getDefaultShortcuts } from '../hooks/useKeyboardShortcuts'
 
@@ -12,7 +10,6 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   const navigation = [
@@ -74,14 +71,10 @@ export default function Layout({ children }: LayoutProps) {
         </nav>
 
         <div className="mt-auto pt-8 border-t-4 border-black mt-8">
-          <div className="mb-4 p-3 border-2 border-black bg-white">
-            <p className="font-bold text-sm">Logged in as:</p>
-            <p className="text-sm">{user?.name}</p>
-            <p className="text-xs text-gray-600">{user?.role}</p>
+          <div className="p-3 border-2 border-black bg-green-200">
+            <p className="font-bold text-sm">Stock Manager v2</p>
+            <p className="text-xs text-gray-700">No login required</p>
           </div>
-          <Button variant="danger" onClick={logout} className="w-full">
-            Logout
-          </Button>
         </div>
       </aside>
 

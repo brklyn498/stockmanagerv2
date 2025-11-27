@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import * as categoryController from '../controllers/categoryController'
 import { validate } from '../middleware/validate'
-import { authMiddleware } from '../middleware/auth'
 import { createCategorySchema, updateCategorySchema } from '../types/schemas'
 
 const router = Router()
 
-router.use(authMiddleware)
+// Auth disabled for demo purposes
+// router.use(authMiddleware)
 
 router.get('/', categoryController.getCategories)
 router.get('/:id', categoryController.getCategory)

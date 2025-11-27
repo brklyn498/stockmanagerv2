@@ -77,6 +77,34 @@ This will start:
 - Frontend at http://localhost:3000
 - Backend API at http://localhost:3001
 
+### Access
+
+**The application is configured in demo mode with authentication disabled.** Simply navigate to `http://localhost:3000` and you'll have immediate access to all features without needing to log in.
+
+### Re-enabling Authentication (Optional)
+
+If you want to enable authentication, follow these steps:
+
+1. Uncomment `router.use(authMiddleware)` in all route files:
+   - `apps/api/src/routes/productRoutes.ts`
+   - `apps/api/src/routes/categoryRoutes.ts`
+   - `apps/api/src/routes/supplierRoutes.ts`
+   - `apps/api/src/routes/stockMovementRoutes.ts`
+   - `apps/api/src/routes/orderRoutes.ts`
+   - `apps/api/src/routes/dashboardRoutes.ts`
+
+2. Restore ProtectedRoute wrapper in `apps/web/src/App.tsx`
+
+3. Re-enable auth interceptors in `apps/web/src/services/api.ts`
+
+4. Add login/register routes back to `apps/web/src/App.tsx`
+
+5. Test credentials:
+   ```
+   Email: admin@stockmanager.com
+   Password: admin123
+   ```
+
 ## Development
 
 ### Available Scripts

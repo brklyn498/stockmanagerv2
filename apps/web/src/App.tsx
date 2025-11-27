@@ -1,9 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
-import { useAuthStore } from './stores/authStore'
-import Login from './pages/Login'
-import Register from './pages/Register'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import Categories from './pages/Categories'
@@ -21,77 +17,17 @@ const queryClient = new QueryClient({
   },
 })
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
-
-  return <Layout>{children}</Layout>
-}
-
 function App() {
-  const checkAuth = useAuthStore(state => state.checkAuth)
-
-  useEffect(() => {
-    checkAuth()
-  }, [checkAuth])
-
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/products"
-            element={
-              <ProtectedRoute>
-                <Products />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/categories"
-            element={
-              <ProtectedRoute>
-                <Categories />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/suppliers"
-            element={
-              <ProtectedRoute>
-                <Suppliers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stock-movements"
-            element={
-              <ProtectedRoute>
-                <StockMovements />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <Orders />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/products" element={<Layout><Products /></Layout>} />
+          <Route path="/categories" element={<Layout><Categories /></Layout>} />
+          <Route path="/suppliers" element={<Layout><Suppliers /></Layout>} />
+          <Route path="/stock-movements" element={<Layout><StockMovements /></Layout>} />
+          <Route path="/orders" element={<Layout><Orders /></Layout>} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
