@@ -45,6 +45,17 @@ model Supplier {
   orders    Order[]
 }
 
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Product {
   id            String   @id @default(cuid())
   sku           String   @unique

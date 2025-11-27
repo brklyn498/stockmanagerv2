@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import Categories from './pages/Categories'
 import Suppliers from './pages/Suppliers'
+import Clients from './pages/Clients'
 import StockMovements from './pages/StockMovements'
 import Orders from './pages/Orders'
 import Layout from './components/Layout'
@@ -26,6 +27,7 @@ function App() {
           <Route path="/products" element={<Layout><Products /></Layout>} />
           <Route path="/categories" element={<Layout><Categories /></Layout>} />
           <Route path="/suppliers" element={<Layout><Suppliers /></Layout>} />
+          <Route path="/clients" element={<Layout><Clients /></Layout>} />
           <Route path="/stock-movements" element={<Layout><StockMovements /></Layout>} />
           <Route path="/orders" element={<Layout><Orders /></Layout>} />
         </Routes>

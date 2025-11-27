@@ -49,6 +49,17 @@ export const createSupplierSchema = z.object({
 
 export const updateSupplierSchema = createSupplierSchema.partial()
 
+// Client schemas
+export const createClientSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export const updateClientSchema = createClientSchema.partial()
+
 // Stock Movement schemas
 export const createStockMovementSchema = z.object({
   type: z.enum(['IN', 'OUT', 'ADJUSTMENT', 'RETURN', 'DAMAGED']),

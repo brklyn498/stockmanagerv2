@@ -17,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Products', path: '/products' },
     { name: 'Categories', path: '/categories' },
     { name: 'Suppliers', path: '/suppliers' },
+    { name: 'Clients', path: '/clients' },
     { name: 'Stock Movements', path: '/stock-movements' },
     { name: 'Orders', path: '/orders' },
   ]

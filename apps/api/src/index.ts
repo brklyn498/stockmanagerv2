@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes'
 import productRoutes from './routes/productRoutes'
 import categoryRoutes from './routes/categoryRoutes'
 import supplierRoutes from './routes/supplierRoutes'
+import clientRoutes from './routes/clientRoutes'
 import stockMovementRoutes from './routes/stockMovementRoutes'
 import orderRoutes from './routes/orderRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
@@ -36,6 +37,7 @@ app.get('/', (_req, res) => {
       products: '/api/products',
       categories: '/api/categories',
       suppliers: '/api/suppliers',
+      clients: '/api/clients',
       orders: '/api/orders',
       stockMovements: '/api/stock-movements',
       dashboard: '/api/dashboard'
@@ -54,6 +56,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/suppliers', supplierRoutes)
+app.use('/api/clients', clientRoutes)
 app.use('/api/stock-movements', stockMovementRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/dashboard', dashboardRoutes)

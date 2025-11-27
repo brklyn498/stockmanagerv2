@@ -10,7 +10,7 @@ interface SearchModalProps {
 }
 
 interface SearchResult {
-  type: 'product' | 'order' | 'supplier' | 'category'
+  type: 'product' | 'order' | 'supplier' | 'client' | 'category'
   id: string
   title: string
   subtitle: string
@@ -63,33 +63,48 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
         // Search suppliers
         const suppliersRes = await api.get(`/suppliers`)
-        const suppliers = suppliersRes.data.filter((s: any) =>
-          s.name.toLowerCase().includes(query.toLowerCase())
-        )
-        suppliers.slice(0, 3).forEach((s: any) => {
+        const suppliers = suppliersRes.data.suppliers || []
+        suppliers
+          .filter((s: any) => s.name.toLowerCase().includes(query.toLowerCase()))
+          .slice(0, 3)
+          .forEach((s: any) => {
+            searchResults.push({
+              type: 'supplier',
+              id: s.id,
+              title: s.name,
+              subtitle: s.email || s.phone || 'No contact info',
+              path: `/suppliers`,
+            })
+          })
+
+        // Search clients
+        const clientsRes = await api.get(`/clients?search=${query}`)
+        const clients = clientsRes.data.clients || []
+        clients.slice(0, 3).forEach((c: any) => {
           searchResults.push({
-            type: 'supplier',
-            id: s.id,
-            title: s.name,
-            subtitle: s.email || s.phone || 'No contact info',
-            path: `/suppliers`,
+            type: 'client',
+            id: c.id,
+            title: c.name,
+            subtitle: c.email || c.phone || 'No contact info',
+            path: `/clients`,
           })
         })
 
         // Search categories
         const categoriesRes = await api.get(`/categories`)
-        const categories = categoriesRes.data.filter((c: any) =>
-          c.name.toLowerCase().includes(query.toLowerCase())
-        )
-        categories.slice(0, 3).forEach((c: any) => {
-          searchResults.push({
-            type: 'category',
-            id: c.id,
-            title: c.name,
-            subtitle: c.description || 'No description',
-            path: `/categories`,
+        const categories = categoriesRes.data.categories || []
+        categories
+          .filter((c: any) => c.name.toLowerCase().includes(query.toLowerCase()))
+          .slice(0, 3)
+          .forEach((c: any) => {
+            searchResults.push({
+              type: 'category',
+              id: c.id,
+              title: c.name,
+              subtitle: c.description || 'No description',
+              path: `/categories`,
+            })
           })
-        })
 
         return searchResults
       } catch (error) {
@@ -147,6 +162,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       product: '📦',
       order: '📋',
       supplier: '🏢',
+      client: '👤',
       category: '📁',
     }
     return icons[type as keyof typeof icons] || '📄'
@@ -157,6 +173,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       product: 'success',
       order: 'info',
       supplier: 'warning',
+      client: 'info',
       category: 'info',
     }
     return (
@@ -186,7 +203,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search products, orders, suppliers, categories..."
+              placeholder="Search products, orders, suppliers, clients, categories..."
               className="w-full text-lg font-bold px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-yellow-400"
             />
           </div>
@@ -203,7 +220,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   Type to start searching
                 </p>
                 <p className="text-sm text-gray-500 font-medium">
-                  Search across products, orders, suppliers, and categories
+                  Search across products, orders, suppliers, clients, and categories
                 </p>
               </div>
             ) : results.length === 0 ? (
