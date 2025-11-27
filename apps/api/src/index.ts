@@ -77,3 +77,46 @@ const server = app.listen(PORT, () => {
 server.timeout = 30000
 server.keepAliveTimeout = 61000
 server.headersTimeout = 62000
+
+// ============================================================================
+// CRASH-PROOFING: Global Error Handlers
+// ============================================================================
+// These handlers prevent the Node.js process from exiting when errors occur,
+// keeping the API server alive even when unexpected errors happen.
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('❌ [UNCAUGHT EXCEPTION] Critical error occurred, but server will stay alive:')
+  console.error('Error name:', error.name)
+  console.error('Error message:', error.message)
+  console.error('Stack trace:', error.stack)
+  console.error('Timestamp:', new Date().toISOString())
+  console.error('⚠️  Server is still running despite this error')
+  // DO NOT exit: process.exit(1)
+})
+
+process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+  console.error('❌ [UNHANDLED REJECTION] Promise rejection occurred, but server will stay alive:')
+  console.error('Reason:', reason)
+  console.error('Promise:', promise)
+  console.error('Timestamp:', new Date().toISOString())
+  console.error('⚠️  Server is still running despite this rejection')
+  // DO NOT exit: process.exit(1)
+})
+
+process.on('SIGTERM', () => {
+  console.log('📡 SIGTERM signal received: closing HTTP server gracefully')
+  server.close(() => {
+    console.log('✅ HTTP server closed')
+    process.exit(0)
+  })
+})
+
+process.on('SIGINT', () => {
+  console.log('📡 SIGINT signal received: closing HTTP server gracefully')
+  server.close(() => {
+    console.log('✅ HTTP server closed')
+    process.exit(0)
+  })
+})
+
+console.log('🛡️  Global error handlers installed - server is crash-proof')
