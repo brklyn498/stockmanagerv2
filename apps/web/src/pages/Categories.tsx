@@ -39,7 +39,8 @@ export default function Categories() {
     queryKey: ['categories'],
     queryFn: async () => {
       const { data } = await api.get('/categories')
-      return data.categories || []
+      // Ensure we always return an array
+      return Array.isArray(data.categories) ? data.categories : []
     },
   })
 
@@ -143,7 +144,7 @@ export default function Categories() {
       <Card>
         {isLoading ? (
           <div className="text-center py-8 font-bold">Loading categories...</div>
-        ) : categories.length === 0 ? (
+        ) : !Array.isArray(categories) || categories.length === 0 ? (
           <div className="text-center py-8 font-bold">
             No categories found. Create your first category!
           </div>
@@ -159,7 +160,7 @@ export default function Categories() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((category: Category) => (
+              {(categories || []).map((category: Category) => (
                 <TableRow key={category.id}>
                   <TableCell>
                     <div className="font-bold">{category.name}</div>
