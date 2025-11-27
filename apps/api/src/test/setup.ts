@@ -12,10 +12,8 @@ process.env.DATABASE_URL = process.env.DATABASE_URL || 'file:./test.db';
 
 // Setup hooks
 beforeAll(async () => {
-  // Generate Prisma Client
-  await execAsync('npx prisma generate');
-
-  // Push schema to test database
+  // Prisma client should already be generated
+  // Just push schema to test database
   await execAsync('npx prisma db push --skip-generate');
 });
 

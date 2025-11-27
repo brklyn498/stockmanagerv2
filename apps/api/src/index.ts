@@ -10,6 +10,7 @@ import stockMovementRoutes from './routes/stockMovementRoutes'
 import orderRoutes from './routes/orderRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
 import { errorHandler } from './middleware/errorHandler'
+import { setupSwagger } from './swagger'
 
 dotenv.config()
 
@@ -27,6 +28,9 @@ app.use((req, res, next) => {
 app.use(cors())
 app.use(express.json())
 
+// Setup Swagger documentation
+setupSwagger(app)
+
 // Root route
 app.get('/', (_req, res) => {
   res.json({
@@ -40,7 +44,8 @@ app.get('/', (_req, res) => {
       clients: '/api/clients',
       orders: '/api/orders',
       stockMovements: '/api/stock-movements',
-      dashboard: '/api/dashboard'
+      dashboard: '/api/dashboard',
+      docs: '/api-docs'
     }
   })
 })
