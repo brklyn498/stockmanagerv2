@@ -188,7 +188,7 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={(entry) => `${entry.name}: ${entry.count}`}
+                  label={false}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="count"
@@ -277,9 +277,8 @@ export default function Dashboard() {
                 {recentMovements.slice(0, 10).map((movement, index) => (
                   <tr
                     key={movement.id}
-                    className={`border-b-2 border-black ${
-                      index % 2 === 0 ? 'bg-yellow-50' : 'bg-white'
-                    }`}
+                    className={`border-b-2 border-black ${index % 2 === 0 ? 'bg-yellow-50' : 'bg-white'
+                      }`}
                   >
                     <td className="py-3 px-4 font-medium">
                       {new Date(movement.createdAt).toLocaleString()}
@@ -294,17 +293,16 @@ export default function Dashboard() {
                       {getMovementTypeBadge(movement.type)}
                     </td>
                     <td
-                      className={`py-3 px-4 font-bold text-right ${
-                        movement.type === 'IN' ||
-                        movement.type === 'RETURN' ||
-                        movement.type === 'ADJUSTMENT'
+                      className={`py-3 px-4 font-bold text-right ${movement.type === 'IN' ||
+                          movement.type === 'RETURN' ||
+                          movement.type === 'ADJUSTMENT'
                           ? 'text-green-600'
                           : 'text-red-600'
-                      }`}
+                        }`}
                     >
                       {movement.type === 'IN' ||
-                      movement.type === 'RETURN' ||
-                      (movement.type === 'ADJUSTMENT' && movement.quantity > 0)
+                        movement.type === 'RETURN' ||
+                        (movement.type === 'ADJUSTMENT' && movement.quantity > 0)
                         ? '+'
                         : ''}
                       {movement.quantity}

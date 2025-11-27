@@ -43,7 +43,8 @@ export default function Suppliers() {
     queryKey: ['suppliers'],
     queryFn: async () => {
       const { data } = await api.get('/suppliers')
-      return data.suppliers || []
+      // Ensure we always return an array
+      return Array.isArray(data.suppliers) ? data.suppliers : []
     },
   })
 
@@ -153,7 +154,7 @@ export default function Suppliers() {
       <Card>
         {isLoading ? (
           <div className="text-center py-8 font-bold">Loading suppliers...</div>
-        ) : suppliers.length === 0 ? (
+        ) : !Array.isArray(suppliers) || suppliers.length === 0 ? (
           <div className="text-center py-8 font-bold">
             No suppliers found. Add your first supplier!
           </div>
@@ -169,7 +170,7 @@ export default function Suppliers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {suppliers.map((supplier: Supplier) => (
+              {(suppliers || []).map((supplier: Supplier) => (
                 <TableRow key={supplier.id}>
                   <TableCell>
                     <div className="font-bold">{supplier.name}</div>
