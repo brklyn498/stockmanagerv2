@@ -9,7 +9,9 @@ import clientRoutes from './routes/clientRoutes'
 import stockMovementRoutes from './routes/stockMovementRoutes'
 import orderRoutes from './routes/orderRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
+import imageRoutes from './routes/imageRoutes' // Image routes
 import { errorHandler } from './middleware/errorHandler'
+import path from 'path'
 import { setupSwagger } from './swagger'
 import { connectDatabase, disconnectDatabase } from './utils/db'
 import { prepareDatabase } from './utils/cleanup'
@@ -30,6 +32,9 @@ app.use((req, res, next) => {
 
 app.use(cors())
 app.use(express.json())
+
+// Serve static files for uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Setup Swagger documentation
 setupSwagger(app)
@@ -85,6 +90,7 @@ app.use('/api/clients', clientRoutes)
 app.use('/api/stock-movements', stockMovementRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/products', imageRoutes) // Mount image routes under /api/products
 
 // Error handling middleware (must be last)
 app.use(errorHandler)

@@ -41,3 +41,4 @@ lerna-debug.log*
 # Misc
 .turbo
 .cache
+*.log
