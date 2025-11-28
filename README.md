@@ -77,6 +77,13 @@ This will start:
 - Frontend at http://localhost:3000
 - Backend API at http://localhost:3001
 
+### Service Ports
+
+| Service | Port | URL |
+|---------|------|-----|
+| Frontend | 3000 | http://localhost:3000 |
+| Backend API | 3001 | http://localhost:3001 |
+
 ### Access
 
 **The application is configured in demo mode with authentication disabled.** Simply navigate to `http://localhost:3000` and you'll have immediate access to all features without needing to log in.
