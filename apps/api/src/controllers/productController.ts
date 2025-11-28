@@ -205,3 +205,122 @@ export const getLowStockProducts = async (
     res.status(500).json({ error: 'Failed to fetch low stock products' })
   }
 }
+
+export const getProductAnalytics = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params
+
+    const product = await prisma.product.findUnique({
+      where: { id },
+    })
+
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' })
+      return
+    }
+
+    const twelveMonthsAgo = new Date()
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
+
+    // Fetch only necessary fields for stock movements
+    const movements = await prisma.stockMovement.findMany({
+      where: {
+        productId: id,
+        createdAt: { gte: twelveMonthsAgo },
+      },
+      select: {
+        type: true,
+        quantity: true,
+        createdAt: true,
+      },
+    })
+
+    // 1. Movement Frequency (by month) - Aggregated in JS to avoid complex SQL for now
+    const movementFrequency = Array.from({ length: 12 }).map((_, i) => {
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const monthKey = date.toLocaleString('default', { month: 'short', year: '2-digit' })
+
+      const movementsInMonth = movements.filter(m => {
+        const mDate = new Date(m.createdAt)
+        return mDate.getMonth() === date.getMonth() && mDate.getFullYear() === date.getFullYear()
+      })
+
+      const inQty = movementsInMonth
+        .filter(m => ['IN', 'RETURN'].includes(m.type))
+        .reduce((sum, m) => sum + m.quantity, 0)
+
+      const outQty = movementsInMonth
+        .filter(m => ['OUT', 'DAMAGED'].includes(m.type))
+        .reduce((sum, m) => sum + m.quantity, 0)
+
+      return {
+        name: monthKey,
+        in: inQty,
+        out: outQty
+      }
+    }).reverse()
+
+    // 2. Turnover Rate & Total Sold
+    // Optimize: Aggregate directly in DB
+    const totalSoldResult = await prisma.orderItem.aggregate({
+      where: {
+        productId: id,
+        order: {
+          type: 'SALE',
+          status: 'COMPLETED',
+        },
+      },
+      _sum: {
+        quantity: true,
+      },
+    })
+    const totalSold = totalSoldResult._sum.quantity || 0
+
+    const turnoverRate = product.quantity > 0
+      ? (totalSold / product.quantity).toFixed(2)
+      : 'N/A'
+
+    // 3. Average Daily Sales (Last 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const salesLast30DaysResult = await prisma.orderItem.aggregate({
+      where: {
+        productId: id,
+        order: {
+          type: 'SALE',
+          status: 'COMPLETED',
+          createdAt: { gte: thirtyDaysAgo },
+        },
+      },
+      _sum: {
+        quantity: true,
+      },
+    })
+
+    const salesLast30Days = salesLast30DaysResult._sum.quantity || 0
+    const avgDailySales = (salesLast30Days / 30).toFixed(1)
+
+    // 4. Days of Stock
+    const daysOfStock = parseFloat(avgDailySales) > 0
+      ? Math.round(product.quantity / parseFloat(avgDailySales))
+      : '∞'
+
+    res.json({
+      analytics: {
+        movementFrequency,
+        turnoverRate,
+        avgDailySales,
+        daysOfStock,
+        totalSold
+      }
+    })
+  } catch (error) {
+    console.error('Get product analytics error:', error)
+    res.status(500).json({ error: 'Failed to fetch product analytics' })
+  }
+}

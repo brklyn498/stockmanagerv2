@@ -20,9 +20,19 @@ export async function clearDatabase() {
     'setting',
   ];
 
+  // Disable foreign key constraints for SQLite
+  await prisma.$executeRawUnsafe('PRAGMA foreign_keys = OFF;');
+
   for (const table of tables) {
-    await prisma.$executeRawUnsafe(`DELETE FROM "${table}";`);
+    try {
+      await prisma.$executeRawUnsafe(`DELETE FROM "${table}";`);
+    } catch (error) {
+      console.error(`Failed to clear table ${table}`, error);
+    }
   }
+
+  // Re-enable foreign key constraints
+  await prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON;');
 }
 
 /**

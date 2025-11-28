@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import Button from '../components/Button'
 import Input from '../components/Input'
@@ -60,6 +61,8 @@ interface Supplier {
 
 export default function Products() {
   const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [stockFilter, setStockFilter] = useState('all')
@@ -104,6 +107,19 @@ export default function Products() {
       return data
     },
   })
+
+  // Handle URL edit action
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (editId && productsData?.products) {
+      const productToEdit = productsData.products.find((p: Product) => p.id === editId)
+      if (productToEdit) {
+        handleOpenModal(productToEdit)
+        // Clear param after opening
+        setSearchParams({})
+      }
+    }
+  }, [searchParams, productsData])
 
   // Fetch categories
   const { data: categoriesData } = useQuery({
@@ -431,22 +447,25 @@ export default function Products() {
                   <TableRow key={product.id}>
                     <TableCell>{product.sku}</TableCell>
                     <TableCell>
-                      <div className="flex gap-3 items-center">
-                         <div className="w-12 h-12 flex-shrink-0">
+                      <div
+                        className="flex gap-3 items-center cursor-pointer group"
+                        onClick={() => navigate(`/products/${product.id}`)}
+                      >
+                         <div className="w-12 h-12 flex-shrink-0 group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black">
                           {product.imageUrl ? (
                             <img
                               src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
                               alt={product.name}
-                              className="w-full h-full object-cover border-2 border-black"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gray-100 border-2 border-black flex items-center justify-center text-gray-400">
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
                               <span className="text-xs">No Img</span>
                             </div>
                           )}
                         </div>
                         <div>
-                          <div className="font-bold">{product.name}</div>
+                          <div className="font-bold underline decoration-transparent group-hover:decoration-black transition-all">{product.name}</div>
                           {product.description && (
                             <div className="text-sm text-gray-600">
                               {product.description.substring(0, 50)}
