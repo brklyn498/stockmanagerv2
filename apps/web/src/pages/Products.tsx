@@ -7,6 +7,8 @@ import Select from '../components/Select'
 import Badge from '../components/Badge'
 import Card from '../components/Card'
 import Modal from '../components/Modal'
+import ImageUpload from '../components/ImageUpload'
+import ProductImage from '../components/ProductImage'
 import {
   Table,
   TableHeader,
@@ -30,6 +32,12 @@ interface Product {
   maxStock?: number
   unit: string
   isActive: boolean
+  imageUrl?: string
+  images: {
+    id: string
+    url: string;
+    isPrimary: boolean
+  }[]
   category: {
     id: string
     name: string
@@ -59,6 +67,11 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [page, setPage] = useState(1)
   const limit = 10
+
+  // Image Upload State
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [productImages, setProductImages] = useState<any[]>([])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -145,6 +158,51 @@ export default function Products() {
     },
   })
 
+  // Image mutations
+  const uploadImagesMutation = useMutation({
+    mutationFn: async ({ id, files }: { id: string; files: File[] }) => {
+      const formData = new FormData()
+      files.forEach((file) => formData.append('images', file))
+      return api.post(`/products/${id}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      // Update local state to show new images
+      setProductImages((prev) => [...prev, ...data.data.images])
+      setUploadedFiles([])
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.error || 'Failed to upload images')
+    },
+  })
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async ({ id, imageId }: { id: string; imageId: string }) => {
+      return api.delete(`/products/${id}/images/${imageId}`)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      setProductImages((prev) => prev.filter((img) => img.id !== variables.imageId))
+    },
+  })
+
+  const setPrimaryImageMutation = useMutation({
+    mutationFn: async ({ id, imageId }: { id: string; imageId: string }) => {
+      return api.put(`/products/${id}/images/${imageId}/primary`)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      setProductImages((prev) =>
+        prev.map((img) => ({
+          ...img,
+          isPrimary: img.id === variables.imageId,
+        }))
+      )
+    },
+  })
+
   // Delete product mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -170,11 +228,14 @@ export default function Products() {
       supplierId: '',
       isActive: true,
     })
+    setUploadedFiles([])
+    setProductImages([])
   }
 
   const handleOpenModal = (product?: Product) => {
     if (product) {
       setEditingProduct(product)
+      setProductImages(product.images || [])
       setFormData({
         sku: product.sku,
         name: product.name,
@@ -221,9 +282,36 @@ export default function Products() {
     }
 
     if (editingProduct) {
+      // For updates, we just update the product data
+      // Images are handled separately via the ImageUpload component
       updateMutation.mutate({ id: editingProduct.id, data: payload })
+
+      // If there are pending files, upload them
+      if (uploadedFiles.length > 0) {
+        setIsUploading(true)
+        uploadImagesMutation.mutate(
+          { id: editingProduct.id, files: uploadedFiles },
+          {
+            onSettled: () => setIsUploading(false),
+          }
+        )
+      }
     } else {
-      createMutation.mutate(payload)
+      // For creates, we create the product first, then upload images if any
+      createMutation.mutate(payload, {
+        onSuccess: (response) => {
+          const newProductId = response.data.id
+          if (uploadedFiles.length > 0) {
+            setIsUploading(true)
+            uploadImagesMutation.mutate(
+              { id: newProductId, files: uploadedFiles },
+              {
+                onSettled: () => setIsUploading(false),
+              }
+            )
+          }
+        },
+      })
     }
   }
 
@@ -343,14 +431,29 @@ export default function Products() {
                   <TableRow key={product.id}>
                     <TableCell>{product.sku}</TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-bold">{product.name}</div>
-                        {product.description && (
-                          <div className="text-sm text-gray-600">
-                            {product.description.substring(0, 50)}
-                            {product.description.length > 50 ? '...' : ''}
-                          </div>
-                        )}
+                      <div className="flex gap-3 items-center">
+                         <div className="w-12 h-12 flex-shrink-0">
+                          {product.imageUrl ? (
+                            <img
+                              src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
+                              alt={product.name}
+                              className="w-full h-full object-cover border-2 border-black"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 border-2 border-black flex items-center justify-center text-gray-400">
+                              <span className="text-xs">No Img</span>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold">{product.name}</div>
+                          {product.description && (
+                            <div className="text-sm text-gray-600">
+                              {product.description.substring(0, 50)}
+                              {product.description.length > 50 ? '...' : ''}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{product.category.name}</TableCell>
@@ -432,6 +535,28 @@ export default function Products() {
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Image Upload Section */}
+          <div className="mb-6">
+            <label className="block text-sm font-bold mb-2">Product Images</label>
+            <ImageUpload
+              files={uploadedFiles}
+              onDrop={(files) => setUploadedFiles(prev => [...prev, ...files])}
+              onRemove={(index) => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+              uploadedImages={productImages}
+              onRemoveUploaded={(imageId) => {
+                 if (editingProduct) {
+                   deleteImageMutation.mutate({ id: editingProduct.id, imageId })
+                 }
+              }}
+              onSetPrimary={(imageId) => {
+                if (editingProduct) {
+                  setPrimaryImageMutation.mutate({ id: editingProduct.id, imageId })
+                }
+              }}
+              isLoading={isUploading}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="SKU"

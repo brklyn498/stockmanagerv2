@@ -659,14 +659,14 @@ Commit as "feat: improve mobile responsiveness", push.
 ## ✅ Implementation Checklist
 
 ### Photo System
-- [ ] ProductImage database model
-- [ ] Multer upload middleware
-- [ ] Sharp image processing (resize, thumbnail)
-- [ ] Image CRUD API endpoints
-- [ ] ImageUpload component (drag & drop)
-- [ ] ProductImage display with lightbox
-- [ ] Update product form with images
-- [ ] Thumbnails in product list
+- [x] ProductImage database model
+- [x] Multer upload middleware
+- [x] Sharp image processing (resize, thumbnail)
+- [x] Image CRUD API endpoints
+- [x] ImageUpload component (drag & drop)
+- [x] ProductImage display with lightbox
+- [x] Update product form with images
+- [x] Thumbnails in product list
 
 ### Metrics & Detail Page
 - [ ] Product detail page route
