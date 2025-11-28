@@ -8,6 +8,7 @@ import Select from '../components/Select'
 import Badge from '../components/Badge'
 import Card from '../components/Card'
 import Modal from '../components/Modal'
+import BulkEditModal from '../components/BulkEditModal'
 import ImageUpload from '../components/ImageUpload'
 import ProductImage from '../components/ProductImage'
 import {
@@ -71,6 +72,13 @@ export default function Products() {
   const [page, setPage] = useState(1)
   const limit = 10
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
+  const [bulkActionType, setBulkActionType] = useState<
+    'category' | 'supplier' | 'prices' | 'stock' | 'activate' | 'deactivate' | 'delete'
+  >('category')
+
   // Image Upload State
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -81,6 +89,7 @@ export default function Products() {
     sku: '',
     name: '',
     description: '',
+    barcode: '',
     price: '',
     costPrice: '',
     quantity: '',
@@ -234,6 +243,7 @@ export default function Products() {
       sku: '',
       name: '',
       description: '',
+      barcode: '',
       price: '',
       costPrice: '',
       quantity: '',
@@ -256,6 +266,7 @@ export default function Products() {
         sku: product.sku,
         name: product.name,
         description: product.description || '',
+        barcode: product.barcode || '',
         price: product.price.toString(),
         costPrice: product.costPrice.toString(),
         quantity: product.quantity.toString(),
@@ -337,6 +348,72 @@ export default function Products() {
     }
   }
 
+  // Bulk operations mutations
+  const bulkOperationMutation = useMutation({
+    mutationFn: async ({ action, data }: { action: string; data: any }) => {
+      const productIds = Array.from(selectedIds)
+
+      switch (action) {
+        case 'category':
+          return api.put('/products/bulk/category', { productIds, ...data })
+        case 'supplier':
+          return api.put('/products/bulk/supplier', { productIds, ...data })
+        case 'prices':
+          return api.put('/products/bulk/prices', { productIds, ...data })
+        case 'stock':
+          return api.put('/products/bulk/stock', { productIds, ...data, userId: 'system' })
+        case 'status':
+          return api.put('/products/bulk/status', { productIds, ...data })
+        case 'delete':
+          return api.delete('/products/bulk', { data: { productIds } })
+        default:
+          throw new Error('Invalid bulk action')
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      setSelectedIds(new Set())
+      setIsBulkModalOpen(false)
+      alert(`Bulk ${variables.action} completed successfully`)
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.error || 'Bulk operation failed')
+    },
+  })
+
+  const handleBulkAction = (action: typeof bulkActionType) => {
+    if (selectedIds.size === 0) {
+      alert('Please select at least one product')
+      return
+    }
+
+    setBulkActionType(action)
+    setIsBulkModalOpen(true)
+  }
+
+  const handleBulkConfirm = (data: any) => {
+    bulkOperationMutation.mutate({ action: bulkActionType, data })
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const newSet = new Set<string>(products.map((p: Product) => p.id))
+      setSelectedIds(newSet)
+    } else {
+      setSelectedIds(new Set())
+    }
+  }
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedIds)
+    if (checked) {
+      newSet.add(id)
+    } else {
+      newSet.delete(id)
+    }
+    setSelectedIds(newSet)
+  }
+
   const handleExport = () => {
     if (products.length === 0) {
       alert('No products to export')
@@ -371,8 +448,35 @@ export default function Products() {
           <p className="text-gray-700 font-medium">
             Manage your product inventory
           </p>
+          {selectedIds.size > 0 && (
+            <div className="mt-2">
+              <Badge variant="success">{selectedIds.size} product(s) selected</Badge>
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
+          {selectedIds.size > 0 && (
+            <select
+              className="px-4 py-2 bg-yellow-400 border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              onChange={(e) => {
+                const value = e.target.value
+                if (value) {
+                  handleBulkAction(value as any)
+                  e.target.value = '' // Reset
+                }
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>Bulk Actions</option>
+              <option value="category">Edit Category</option>
+              <option value="supplier">Edit Supplier</option>
+              <option value="prices">Adjust Prices</option>
+              <option value="stock">Adjust Stock</option>
+              <option value="activate">Activate</option>
+              <option value="deactivate">Deactivate</option>
+              <option value="delete">Delete</option>
+            </select>
+          )}
           <Button variant="secondary" onClick={handleExport}>
             Export CSV
           </Button>
@@ -433,6 +537,14 @@ export default function Products() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === products.length && products.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="w-5 h-5 border-4 border-black cursor-pointer"
+                    />
+                  </TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
@@ -445,13 +557,21 @@ export default function Products() {
               <TableBody>
                 {products.map((product: Product) => (
                   <TableRow key={product.id}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(product.id)}
+                        onChange={(e) => handleSelectOne(product.id, e.target.checked)}
+                        className="w-5 h-5 border-4 border-black cursor-pointer"
+                      />
+                    </TableCell>
                     <TableCell>{product.sku}</TableCell>
                     <TableCell>
                       <div
                         className="flex gap-3 items-center cursor-pointer group"
                         onClick={() => navigate(`/products/${product.id}`)}
                       >
-                         <div className="w-12 h-12 flex-shrink-0 group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black">
+                        <div className="w-12 h-12 flex-shrink-0 group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black">
                           {product.imageUrl ? (
                             <img
                               src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
@@ -563,9 +683,9 @@ export default function Products() {
               onRemove={(index) => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
               uploadedImages={productImages}
               onRemoveUploaded={(imageId) => {
-                 if (editingProduct) {
-                   deleteImageMutation.mutate({ id: editingProduct.id, imageId })
-                 }
+                if (editingProduct) {
+                  deleteImageMutation.mutate({ id: editingProduct.id, imageId })
+                }
               }}
               onSetPrimary={(imageId) => {
                 if (editingProduct) {
@@ -590,6 +710,15 @@ export default function Products() {
               required
             />
           </div>
+
+          <Input
+            label="Barcode (Optional)"
+            value={formData.barcode}
+            onChange={(e) =>
+              setFormData({ ...formData, barcode: e.target.value })
+            }
+            placeholder="Enter barcode if available"
+          />
 
           <Input
             label="Description"
@@ -724,6 +853,18 @@ export default function Products() {
           </div>
         </form>
       </Modal>
+
+      {/* Bulk Edit Modal */}
+      <BulkEditModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        actionType={bulkActionType}
+        selectedCount={selectedIds.size}
+        categories={categories}
+        suppliers={suppliers}
+        onConfirm={handleBulkConfirm}
+        isLoading={bulkOperationMutation.isPending}
+      />
     </div>
   )
 }
