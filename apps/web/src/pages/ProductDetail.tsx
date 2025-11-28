@@ -18,7 +18,7 @@ export default function ProductDetail() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'orders' | 'analytics'>('overview')
 
-  const { data: productData, isLoading } = useQuery({
+  const { data: productData, isLoading, refetch } = useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
       const { data } = await api.get(`/products/${id}`)
@@ -94,6 +94,8 @@ export default function ProductDetail() {
           <ProductImage
             images={productData.images || []}
             alt={productData.name}
+            productId={id}
+            onImageDeleted={() => refetch()}
           />
         </div>
 

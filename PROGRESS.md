@@ -2,8 +2,8 @@
 
 ## Project Status
 - **Current Phase:** Phase 7 - Testing & Documentation (IN PROGRESS)
-- **Last Updated:** 2025-11-27
-- **Last Session:** Session 12 - Receipt Integration, AI Cleanup & Orders Bug Fixes
+- **Last Updated:** 2025-11-28
+- **Last Session:** Session 15 - Image Deletion Feature
 
 ---
 
@@ -97,6 +97,46 @@
 ---
 
 ## 📝 Session Log
+
+### 2025-11-28 (Session 15 - Image Deletion Feature)
+- Started: Adding image deletion functionality to product detail page
+- Completed:
+  - **Frontend Image Deletion:**
+    - Enhanced `ProductImage.tsx` component with hover-to-delete functionality:
+      - Added `productId` and `onImageDeleted` props to interface
+      - Implemented `handleDeleteImage` async function with API call
+      - Added `deletingImageId` state for animation tracking
+      - Main image: Red minus button appears on hover (top-right corner)
+      - Thumbnails: Red minus overlay appears on hover (full coverage)
+      - Smooth fade-out and scale-down animation (300ms) on delete
+      - Browser confirmation dialog prevents accidental deletions
+    - Updated `ProductDetail.tsx`:
+      - Added `refetch` from useQuery to enable data refresh
+      - Passed `productId={id}` and `onImageDeleted={() => refetch()}` to ProductImage
+  - **Brutalist Design Implementation:**
+    - Minus button styled with thick black borders and shadow
+    - Red background (bg-red-500) with hover effect (bg-red-600)
+    - Button scales on hover for feedback
+    - Smooth opacity transitions (opacity-0 to opacity-100)
+  - **Backend Integration:**
+    - Connected to existing DELETE endpoint: `/api/products/:id/images/:imageId`
+    - Backend already handles:
+      - File deletion (main image + thumbnail)
+      - Database record removal
+      - Primary image reassignment if deleted image was primary
+      - Product imageUrl update
+  - **User Experience:**
+    - Hover over any image (main or thumbnail) to reveal delete button
+    - Click minus button → confirmation dialog appears
+    - Confirm → image animates away → auto-refresh shows updated images
+    - If primary image deleted, next image becomes primary automatically
+    - If last image deleted, "No Image" placeholder shown
+- Verification:
+  - TypeScript compilation successful (no new errors)
+  - Image routes already registered in API index.ts
+  - Frontend HMR working correctly
+- Status: Image deletion feature complete and ready for testing
+- Next: Test deletion workflow, then commit to GitHub
 
 ### 2025-11-28 (Session 14 - Product Editing Features)
 - Started: Implementation of Product Editing Features (Section 3 of PRODUCT_PAGE_SPECIFICS.md)
