@@ -1,0 +1,5 @@
+{
+  "name": "Stockify",
+  "description": "A neo-brutalist inventory management dashboard featuring stock overview, recent activity tracking, and AI-powered insights.",
+  "requestFramePermissions": []
+}
