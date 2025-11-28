@@ -33,9 +33,11 @@ interface ProductCardProps {
     }
     onEdit: (product: any) => void
     onDelete: (id: string) => void
+    onQuickStock: (product: any) => void
+    onDuplicate: (product: any) => void
 }
 
-export default function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
+export default function ProductCard({ product, onEdit, onDelete, onQuickStock, onDuplicate }: ProductCardProps) {
     const navigate = useNavigate()
 
     const getStockBadge = () => {
@@ -78,29 +80,53 @@ export default function ProductCard({ product, onEdit, onDelete }: ProductCardPr
                 )}
 
                 {/* Hover Actions Overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button
-                        variant="primary"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onEdit(product)
-                        }}
-                        className="text-sm py-1 px-3"
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            if (confirm(`Delete ${product.name}?`)) {
-                                onDelete(product.id)
-                            }
-                        }}
-                        className="text-sm py-1 px-3"
-                    >
-                        Delete
-                    </Button>
+                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                    <div className="flex gap-2">
+                        <Button
+                            variant="primary"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onEdit(product)
+                            }}
+                            className="text-xs py-1 px-2"
+                        >
+                            Edit
+                        </Button>
+                        <Button
+                            variant="danger"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                if (confirm(`Delete ${product.name}?`)) {
+                                    onDelete(product.id)
+                                }
+                            }}
+                            className="text-xs py-1 px-2"
+                        >
+                            Del
+                        </Button>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="secondary"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onQuickStock(product)
+                            }}
+                            className="text-xs py-1 px-2"
+                        >
+                            Stock
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onDuplicate(product)
+                            }}
+                            className="text-xs py-1 px-2"
+                        >
+                            Copy
+                        </Button>
+                    </div>
                 </div>
             </div>
 

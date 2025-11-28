@@ -33,10 +33,12 @@ interface ProductsGridProps {
     products: Product[]
     onEdit: (product: Product) => void
     onDelete: (id: string) => void
+    onQuickStock: (product: Product) => void
+    onDuplicate: (product: Product) => void
     isLoading?: boolean
 }
 
-export default function ProductsGrid({ products, onEdit, onDelete, isLoading }: ProductsGridProps) {
+export default function ProductsGrid({ products, onEdit, onDelete, onQuickStock, onDuplicate, isLoading }: ProductsGridProps) {
     if (isLoading) {
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -67,6 +69,8 @@ export default function ProductsGrid({ products, onEdit, onDelete, isLoading }: 
                     product={product}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onQuickStock={onQuickStock}
+                    onDuplicate={onDuplicate}
                 />
             ))}
         </div>

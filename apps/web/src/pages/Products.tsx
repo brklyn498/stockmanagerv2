@@ -11,8 +11,8 @@ import Modal from '../components/Modal'
 import BulkEditModal from '../components/BulkEditModal'
 import FilterPanel, { FilterState } from '../components/FilterPanel'
 import ImageUpload from '../components/ImageUpload'
-import ProductImage from '../components/ProductImage'
 import ProductsGrid from '../components/ProductsGrid'
+import QuickStockAdjust from '../components/QuickStockAdjust'
 import {
   Table,
   TableHeader,
@@ -171,6 +171,73 @@ export default function Products() {
     },
   })
 
+  const products = productsData?.products || []
+  const totalPages = Math.ceil((productsData?.total || 0) / limit)
+
+  // Quick Stock Adjust State
+  const [quickStockProduct, setQuickStockProduct] = useState<Product | null>(null)
+  const [isQuickStockModalOpen, setIsQuickStockModalOpen] = useState(false)
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        document.activeElement?.tagName === 'SELECT'
+      ) {
+        return
+      }
+
+      // Only work if a single product is selected or we have a focused product (future)
+      // For now, we'll just implement global shortcuts if needed, but the spec says "on product detail page"
+      // or "when product row is focused/selected".
+      // Since we don't have row focus state yet, we'll skip global shortcuts for specific products
+      // unless we implement selection-based actions.
+
+      // However, let's implement the shortcuts if we have exactly one product selected
+      if (selectedIds.size === 1) {
+        const productId = Array.from(selectedIds)[0]
+        const product = products.find((p: Product) => p.id === productId)
+
+        if (product) {
+          switch (e.key) {
+            case '+':
+              e.preventDefault()
+              handleQuickStock(product)
+              break
+            case '-':
+              e.preventDefault()
+              handleQuickStock(product) // Modal handles type
+              break
+            case 'd':
+              e.preventDefault()
+              handleDuplicate(product)
+              break
+            case 'l':
+              e.preventDefault()
+              alert(`Printing label for ${product.sku}...`)
+              break
+            case 'h':
+              e.preventDefault()
+              // Navigate to history tab (future)
+              alert('History tab not implemented yet')
+              break
+            case 'o':
+              e.preventDefault()
+              // Create order (future)
+              alert('Create order not implemented yet')
+              break
+          }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedIds, products])
+
   // Handle URL edit action
   useEffect(() => {
     const editId = searchParams.get('edit')
@@ -312,6 +379,40 @@ export default function Products() {
     setProductImages([])
   }
 
+  const handleQuickStock = (product: Product) => {
+    setQuickStockProduct(product)
+    setIsQuickStockModalOpen(true)
+  }
+
+  const handleDuplicate = (product: Product) => {
+    const newProduct = {
+      ...product,
+      sku: `${product.sku}-COPY`,
+      name: `${product.name} (Copy)`,
+      images: [], // Don't copy images for now as they are linked to specific IDs
+      imageUrl: undefined
+    }
+    handleOpenModal(newProduct)
+  }
+
+  const quickStockMutation = useMutation({
+    mutationFn: async (data: { productIds: string[]; type: string; quantity: number; reason: string; notes: string }) => {
+      // We'll use the bulk endpoint as it supports what we need
+      return api.put('/products/bulk/stock', {
+        ...data,
+        userId: 'system' // In a real app, get from auth context
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      setIsQuickStockModalOpen(false)
+      setQuickStockProduct(null)
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.error || 'Failed to adjust stock')
+    }
+  })
+
   const handleOpenModal = (product?: Product) => {
     if (product) {
       setEditingProduct(product)
@@ -416,6 +517,10 @@ export default function Products() {
           return api.put('/products/bulk/prices', { productIds, ...data })
         case 'stock':
           return api.put('/products/bulk/stock', { productIds, ...data, userId: 'system' })
+        case 'activate':
+          return api.put('/products/bulk/status', { productIds, isActive: true })
+        case 'deactivate':
+          return api.put('/products/bulk/status', { productIds, isActive: false })
         case 'status':
           return api.put('/products/bulk/status', { productIds, ...data })
         case 'delete':
@@ -490,9 +595,6 @@ export default function Products() {
     return <Badge variant="success">Normal</Badge>
   }
 
-  const products = productsData?.products || []
-  const totalPages = Math.ceil((productsData?.total || 0) / limit)
-
   return (
     <div>
       {/* Header */}
@@ -534,26 +636,54 @@ export default function Products() {
             </Button>
           </div>
           {selectedIds.size > 0 && (
-            <select
-              className="px-4 py-2 bg-yellow-400 border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-              onChange={(e) => {
-                const value = e.target.value
-                if (value) {
-                  handleBulkAction(value as any)
-                  e.target.value = '' // Reset
-                }
-              }}
-              defaultValue=""
-            >
-              <option value="" disabled>Bulk Actions</option>
-              <option value="category">Edit Category</option>
-              <option value="supplier">Edit Supplier</option>
-              <option value="prices">Adjust Prices</option>
-              <option value="stock">Adjust Stock</option>
-              <option value="activate">Activate</option>
-              <option value="deactivate">Deactivate</option>
-              <option value="delete">Delete</option>
-            </select>
+            <div className="flex gap-2">
+              {selectedIds.size === 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      const id = Array.from(selectedIds)[0]
+                      const product = products.find((p: Product) => p.id === id)
+                      if (product) handleQuickStock(product)
+                    }}
+                    className="text-sm py-2"
+                  >
+                    ± Stock
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      const id = Array.from(selectedIds)[0]
+                      const product = products.find((p: Product) => p.id === id)
+                      if (product) handleDuplicate(product)
+                    }}
+                    className="text-sm py-2"
+                  >
+                    Duplicate
+                  </Button>
+                </>
+              )}
+              <select
+                className="px-4 py-2 bg-yellow-400 border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (value) {
+                    handleBulkAction(value as any)
+                    e.target.value = '' // Reset
+                  }
+                }}
+                defaultValue=""
+              >
+                <option value="" disabled>Bulk Actions</option>
+                <option value="category">Edit Category</option>
+                <option value="supplier">Edit Supplier</option>
+                <option value="prices">Adjust Prices</option>
+                <option value="stock">Adjust Stock</option>
+                <option value="activate">Activate</option>
+                <option value="deactivate">Deactivate</option>
+                <option value="delete">Delete</option>
+              </select>
+            </div>
           )}
           <Button variant="secondary" onClick={handleExport}>
             Export CSV
@@ -588,149 +718,183 @@ export default function Products() {
           products={products}
           onEdit={(product) => handleOpenModal(product)}
           onDelete={handleDelete}
+          onQuickStock={handleQuickStock}
+          onDuplicate={handleDuplicate}
           isLoading={productsLoading}
         />
       ) : (
         <Card>
-        {productsLoading ? (
-          <div className="text-center py-8 font-bold">Loading products...</div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-8 font-bold">
-            No products found. Add your first product!
-          </div>
-        ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.size === products.length && products.length > 0}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="w-5 h-5 border-4 border-black cursor-pointer"
-                    />
-                  </TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product: Product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
+          {productsLoading ? (
+            <div className="text-center py-8 font-bold">Loading products...</div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-8 font-bold">
+              No products found. Add your first product!
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
                       <input
                         type="checkbox"
-                        checked={selectedIds.has(product.id)}
-                        onChange={(e) => handleSelectOne(product.id, e.target.checked)}
+                        checked={selectedIds.size === products.length && products.length > 0}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
                         className="w-5 h-5 border-4 border-black cursor-pointer"
                       />
-                    </TableCell>
-                    <TableCell>{product.sku}</TableCell>
-                    <TableCell>
-                      <div
-                        className="flex gap-3 items-center cursor-pointer group"
-                        onClick={() => navigate(`/products/${product.id}`)}
-                      >
-                        <div className="w-12 h-12 flex-shrink-0 group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black">
-                          {product.imageUrl ? (
-                            <img
-                              src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                              <span className="text-xs">No Img</span>
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-bold underline decoration-transparent group-hover:decoration-black transition-all">{product.name}</div>
-                          {product.description && (
-                            <div className="text-sm text-gray-600">
-                              {product.description.substring(0, 50)}
-                              {product.description.length > 50 ? '...' : ''}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{product.category.name}</TableCell>
-                    <TableCell className="font-bold">
-                      ${product.price.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-bold">
-                          {product.quantity} {product.unit}
-                        </div>
-                        {getStockBadge(product.quantity, product.minStock)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {product.isActive ? (
-                        <Badge variant="success">Active</Badge>
-                      ) : (
-                        <Badge variant="danger">Inactive</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleOpenModal(product)}
-                          className="px-3 py-1 bg-cyan-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="px-3 py-1 bg-red-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product: Product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(product.id)}
+                          onChange={(e) => handleSelectOne(product.id, e.target.checked)}
+                          className="w-5 h-5 border-4 border-black cursor-pointer"
+                        />
+                      </TableCell>
+                      <TableCell>{product.sku}</TableCell>
+                      <TableCell>
+                        <div
+                          className="flex gap-3 items-center cursor-pointer group"
+                          onClick={() => navigate(`/products/${product.id}`)}
+                        >
+                          <div className="w-12 h-12 flex-shrink-0 group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black">
+                            {product.imageUrl ? (
+                              <img
+                                src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                <span className="text-xs">No Img</span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-bold underline decoration-transparent group-hover:decoration-black transition-all">{product.name}</div>
+                            {product.description && (
+                              <div className="text-sm text-gray-600">
+                                {product.description.substring(0, 50)}
+                                {product.description.length > 50 ? '...' : ''}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{product.category.name}</TableCell>
+                      <TableCell className="font-bold">
+                        ${product.price.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-bold">
+                            {product.quantity} {product.unit}
+                          </div>
+                          {getStockBadge(product.quantity, product.minStock)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {product.isActive ? (
+                          <Badge variant="success">Active</Badge>
+                        ) : (
+                          <Badge variant="danger">Inactive</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleOpenModal(product)}
+                            className="px-3 py-1 bg-cyan-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="px-3 py-1 bg-red-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={() => handleQuickStock(product)}
+                            className="px-3 py-1 bg-gray-200 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
+                            title="Adjust Stock"
+                          >
+                            ±
+                          </button>
+                          <div className="relative group">
+                            <button className="px-3 py-1 bg-gray-200 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5">
+                              ...
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden group-hover:block z-10">
+                              <button
+                                onClick={() => handleDuplicate(product)}
+                                className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold border-b-2 border-black"
+                              >
+                                Duplicate
+                              </button>
+                              <button
+                                onClick={() => alert('Print label')}
+                                className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold border-b-2 border-black"
+                              >
+                                Print Label
+                              </button>
+                              <button
+                                onClick={() => alert('View History')}
+                                className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold"
+                              >
+                                History
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-            {/* Pagination */}
-            <div className="mt-6 flex items-center justify-between">
-              <div className="font-bold">
-                Showing {(page - 1) * limit + 1} to{' '}
-                {Math.min(page * limit, productsData?.total || 0)} of{' '}
-                {productsData?.total || 0} products
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center px-4 font-bold">
-                  Page {page} of {totalPages}
+              {/* Pagination */}
+              <div className="mt-6 flex items-center justify-between">
+                <div className="font-bold">
+                  Showing {(page - 1) * limit + 1} to{' '}
+                  {Math.min(page * limit, productsData?.total || 0)} of{' '}
+                  {productsData?.total || 0} products
                 </div>
-                <Button
-                  variant="secondary"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  Next
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center px-4 font-bold">
+                    Page {page} of {totalPages}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </Card>
+            </>
+          )}
+        </Card>
       )}
 
       {/* Product Form Modal */}
@@ -801,14 +965,27 @@ export default function Products() {
             onChange={e => setFormData({ ...formData, unit: e.target.value })}
             options={[
               { value: 'piece', label: 'Piece' },
+              { value: 'kg', label: 'Kilogram (kg)' },
+              { value: 'g', label: 'Gram (g)' },
+              { value: 'l', label: 'Liter (l)' },
+              { value: 'ml', label: 'Milliliter (ml)' },
               { value: 'box', label: 'Box' },
-              { value: 'kg', label: 'Kilogram' },
-              { value: 'liter', label: 'Liter' },
-              { value: 'meter', label: 'Meter' },
+              { value: 'pack', label: 'Pack' },
+              { value: 'set', label: 'Set' },
+              { value: 'pair', label: 'Pair' },
+              { value: 'meter', label: 'Meter (m)' },
             ]}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Price"
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={e => setFormData({ ...formData, price: e.target.value })}
+              required
+            />
             <Input
               label="Cost Price"
               type="number"
@@ -817,14 +994,6 @@ export default function Products() {
               onChange={e =>
                 setFormData({ ...formData, costPrice: e.target.value })
               }
-              required
-            />
-            <Input
-              label="Selling Price"
-              type="number"
-              step="0.01"
-              value={formData.price}
-              onChange={e => setFormData({ ...formData, price: e.target.value })}
               required
             />
           </div>
@@ -849,7 +1018,7 @@ export default function Products() {
               required
             />
             <Input
-              label="Max Stock (Optional)"
+              label="Max Stock"
               type="number"
               value={formData.maxStock}
               onChange={e =>
@@ -858,39 +1027,38 @@ export default function Products() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Category"
-              value={formData.categoryId}
-              onChange={e =>
-                setFormData({ ...formData, categoryId: e.target.value })
-              }
-              options={[
-                { value: '', label: 'Select Category' },
-                ...categories.map((cat: Category) => ({
-                  value: cat.id,
-                  label: cat.name,
-                })),
-              ]}
-              required
-            />
-            <Select
-              label="Supplier (Optional)"
-              value={formData.supplierId}
-              onChange={e =>
-                setFormData({ ...formData, supplierId: e.target.value })
-              }
-              options={[
-                { value: '', label: 'No Supplier' },
-                ...suppliers.map((sup: Supplier) => ({
-                  value: sup.id,
-                  label: sup.name,
-                })),
-              ]}
-            />
-          </div>
+          <Select
+            label="Category"
+            value={formData.categoryId}
+            onChange={e =>
+              setFormData({ ...formData, categoryId: e.target.value })
+            }
+            options={[
+              { value: '', label: 'Select Category' },
+              ...categories.map((c: Category) => ({
+                value: c.id,
+                label: c.name,
+              })),
+            ]}
+            required
+          />
 
-          <div className="flex items-center gap-3">
+          <Select
+            label="Supplier"
+            value={formData.supplierId}
+            onChange={e =>
+              setFormData({ ...formData, supplierId: e.target.value })
+            }
+            options={[
+              { value: '', label: 'Select Supplier' },
+              ...suppliers.map((s: Supplier) => ({
+                value: s.id,
+                label: s.name,
+              })),
+            ]}
+          />
+
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="isActive"
@@ -898,29 +1066,23 @@ export default function Products() {
               onChange={e =>
                 setFormData({ ...formData, isActive: e.target.checked })
               }
-              className="w-6 h-6 border-4 border-black"
+              className="w-5 h-5 border-4 border-black"
             />
             <label htmlFor="isActive" className="font-bold">
-              Product is Active
+              Active Product
             </label>
           </div>
 
-          <div className="flex gap-4 pt-4">
-            <Button type="submit" className="flex-1">
-              {editingProduct ? 'Update Product' : 'Create Product'}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleCloseModal}
-              className="flex-1"
-            >
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="secondary" onClick={handleCloseModal}>
               Cancel
+            </Button>
+            <Button type="submit">
+              {editingProduct ? 'Update Product' : 'Create Product'}
             </Button>
           </div>
         </form>
       </Modal>
-
       {/* Bulk Edit Modal */}
       <BulkEditModal
         isOpen={isBulkModalOpen}
@@ -931,6 +1093,22 @@ export default function Products() {
         suppliers={suppliers}
         onConfirm={handleBulkConfirm}
         isLoading={bulkOperationMutation.isPending}
+      />
+
+      {/* Quick Stock Adjust Modal */}
+      <QuickStockAdjust
+        isOpen={isQuickStockModalOpen}
+        onClose={() => setIsQuickStockModalOpen(false)}
+        product={quickStockProduct}
+        isLoading={quickStockMutation.isPending}
+        onConfirm={(data) => {
+          if (quickStockProduct) {
+            quickStockMutation.mutate({
+              productIds: [quickStockProduct.id],
+              ...data
+            })
+          }
+        }}
       />
     </div>
   )

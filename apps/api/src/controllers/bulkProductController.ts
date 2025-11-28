@@ -246,6 +246,7 @@ export const bulkUpdateStatus = async (req: Request, res: Response) => {
 }
 
 // Bulk delete products
+// Bulk delete products (Soft delete)
 export const bulkDeleteProducts = async (req: Request, res: Response) => {
     try {
         const { productIds } = req.body
@@ -254,9 +255,10 @@ export const bulkDeleteProducts = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'productIds array is required' })
         }
 
-        // Delete products (cascades to images and stock movements)
-        const result = await prisma.product.deleteMany({
+        // Soft delete products (set isActive to false)
+        const result = await prisma.product.updateMany({
             where: { id: { in: productIds } },
+            data: { isActive: false },
         })
 
         res.json({
