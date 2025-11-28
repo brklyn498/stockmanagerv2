@@ -382,19 +382,6 @@ Enhance product search and filtering:
    - Saved filters dropdown
    - Store in localStorage
 
-Neobrutalism filter panel. Commit as "feat: add advanced product filtering", push.
-```
-
----
-
-## 📋 5. Product List View Options
-
-### 5.1 View Modes
-| Mode | Description |
-|------|-------------|
-| **Table View** | Current default, dense data display |
-| **Card View** | Grid of product cards with images |
-| **Compact View** | Minimal table, more rows visible |
 
 ### 5.2 Table Columns (Configurable)
 | Column | Default | Sortable |

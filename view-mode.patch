@@ -1,0 +1,90 @@
+diff --git a/apps/web/src/pages/Products.tsx b/apps/web/src/pages/Products.tsx
+index existing..new 100644
+--- a/apps/web/src/pages/Products.tsx
++++ b/apps/web/src/pages/Products.tsx
+@@ -11,6 +11,7 @@ import Modal from '../components/Modal'
+ import BulkEditModal from '../components/BulkEditModal'
+ import FilterPanel, { FilterState } from '../components/FilterPanel'
+ import ImageUpload from '../components/ImageUpload'
++import ProductsGrid from '../components/ProductsGrid'
+ import {
+   Table,
+   TableHeader,
+@@ -69,6 +70,16 @@ export default function Products() {
+   const [page, setPage] = useState(1)
+   const limit = 10
+ 
++  // View mode state
++  const [viewMode, setViewMode] = useState<'table' | 'cards' | 'compact'>(() => {
++    return (localStorage.getItem('productsViewMode') as any) || 'table'
++  })
++
++  const handleViewModeChange = (mode: 'table' | 'cards' | 'compact') => {
++    setViewMode(mode)
++    localStorage.setItem('productsViewMode', mode)
++  }
++
+   // Filter state (initialized from URL)
+   const [filters, setFilters] = useState<FilterState>({
+     search: searchParams.get('search') || '',
+@@ -508,6 +519,31 @@ export default function Products() {
+         </div>
+         <div className="flex gap-3">
++          {/* View Mode Toggle */}
++          <div className="flex gap-2">
++            <Button
++              variant={viewMode === 'table' ? 'primary' : 'secondary'}
++              onClick={() => handleViewModeChange('table')}
++              className="text-sm py-2"
++            >
++              ☰ Table
++            </Button>
++            <Button
++              variant={viewMode === 'cards' ? 'primary' : 'secondary'}
++              onClick={() => handleViewModeChange('cards')}
++              className="text-sm py-2"
++            >
++              ▦ Cards
++            </Button>
++            <Button
++              variant={viewMode === 'compact' ? 'primary' : 'secondary'}
++              onClick={() => handleViewModeChange('compact')}
++              className="text-sm py-2"
++            >
++              ≡ Compact
++            </Button>
++          </div>
++
+           {selectedIds.size > 0 && (
+             <select
+               className="px-4 py-2 bg-yellow-400 border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+@@ -584,8 +620,17 @@ export default function Products() {
+         }}
+       />
+ 
+-      {/* Products Table */}
+-      <Card>
++      {/* Products Display - Conditional View Mode */}
++      {viewMode === 'cards' ? (
++        <ProductsGrid
++          products={products}
++          onEdit={handleOpenModal}
++          onDelete={handleDelete}
++          isLoading={productsLoading}
++        />
++      ) : (
++        <Card>
++
+         {productsLoading ? (
+           <div className="text-center py-8 font-bold">Loading products...</div>
+         ) : products.length === 0 ? (
+@@ -690,7 +735,8 @@ export default function Products() {
+             </div>
+           </>
+         )}
+-      </Card>
++        </Card>
++      )}
+ 
+       {/* Product Form Modal */}
+       <Modal
