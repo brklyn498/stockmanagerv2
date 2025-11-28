@@ -92,7 +92,6 @@ export default function ProductDetail() {
         {/* Left: Image */}
         <div className="md:col-span-1">
           <ProductImage
-            mainImage={productData.imageUrl}
             images={productData.images || []}
             alt={productData.name}
           />

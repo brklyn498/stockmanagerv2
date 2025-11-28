@@ -94,6 +94,7 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       include: {
         category: true,
         supplier: true,
+        images: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -157,6 +158,7 @@ export const getProduct = async (req: Request, res: Response): Promise<void> => 
       include: {
         category: true,
         supplier: true,
+        images: { orderBy: { sortOrder: 'asc' } },
         stockMovements: {
           take: 10,
           orderBy: { createdAt: 'desc' },
@@ -184,6 +186,7 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
       include: {
         category: true,
         supplier: true,
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     })
 
@@ -214,6 +217,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
       include: {
         category: true,
         supplier: true,
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     })
 
@@ -253,6 +257,7 @@ export const getLowStockProducts = async (
       include: {
         category: true,
         supplier: true,
+        images: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { quantity: 'asc' },
     })
