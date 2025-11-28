@@ -4,12 +4,19 @@ import { AuthRequest } from '../middleware/auth'
 
 export const getOrders = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { type, status, search } = req.query
+    const { type, status, search, productId } = req.query
 
     const where: any = {}
 
     if (type) where.type = type
     if (status) where.status = status
+    if (productId) {
+      where.items = {
+        some: {
+          productId: productId as string,
+        },
+      }
+    }
 
     // Add search functionality
     if (search) {

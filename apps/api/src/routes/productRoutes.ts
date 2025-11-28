@@ -10,6 +10,7 @@ const router = Router()
 
 router.get('/', productController.getProducts)
 router.get('/low-stock', productController.getLowStockProducts)
+router.get('/:id/analytics', productController.getProductAnalytics)
 router.get('/:id', productController.getProduct)
 router.post('/', validate(createProductSchema), productController.createProduct)
 router.put('/:id', validate(updateProductSchema), productController.updateProduct)
