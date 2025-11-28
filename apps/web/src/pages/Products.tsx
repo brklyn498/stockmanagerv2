@@ -9,6 +9,7 @@ import Badge from '../components/Badge'
 import Card from '../components/Card'
 import Modal from '../components/Modal'
 import BulkEditModal from '../components/BulkEditModal'
+import FilterPanel, { FilterState } from '../components/FilterPanel'
 import ImageUpload from '../components/ImageUpload'
 import ProductImage from '../components/ProductImage'
 import {
@@ -64,13 +65,47 @@ export default function Products() {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [stockFilter, setStockFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [page, setPage] = useState(1)
   const limit = 10
+
+  // Filter state (initialized from URL)
+  const [filters, setFilters] = useState<FilterState>({
+    search: searchParams.get('search') || '',
+    categories: searchParams.get('categories')?.split(',').filter(Boolean) || [],
+    suppliers: searchParams.get('suppliers')?.split(',').filter(Boolean) || [],
+    stockStatus: searchParams.get('stockStatus') || 'all',
+    priceMin: searchParams.get('priceMin') || '',
+    priceMax: searchParams.get('priceMax') || '',
+    isActive: searchParams.get('isActive') || 'all',
+    dateFrom: searchParams.get('dateFrom') || '',
+    dateTo: searchParams.get('dateTo') || '',
+  })
+
+  // Saved filters in localStorage
+  const [savedFilters, setSavedFilters] = useState<Array<{ name: string; filters: FilterState }>>(() => {
+    const saved = localStorage.getItem('productFilters')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Sync filters to URL
+  useEffect(() => {
+    const params = new URLSearchParams()
+
+    if (filters.search) params.set('search', filters.search)
+    if (filters.categories.length > 0) params.set('categories', filters.categories.join(','))
+    if (filters.suppliers.length > 0) params.set('suppliers', filters.suppliers.join(','))
+    if (filters.stockStatus !== 'all') params.set('stockStatus', filters.stockStatus)
+    if (filters.priceMin) params.set('priceMin', filters.priceMin)
+    if (filters.priceMax) params.set('priceMax', filters.priceMax)
+    if (filters.isActive !== 'all') params.set('isActive', filters.isActive)
+    if (filters.dateFrom) params.set('dateFrom', filters.dateFrom)
+    if (filters.dateTo) params.set('dateTo', filters.dateTo)
+    if (page > 1) params.set('page', page.toString())
+
+    setSearchParams(params, { replace: true })
+  }, [filters, page, setSearchParams])
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -103,15 +138,23 @@ export default function Products() {
 
   // Fetch products
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', page, search, categoryFilter, stockFilter],
+    queryKey: ['products', page, filters],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        ...(search && { search }),
-        ...(categoryFilter !== 'all' && { categoryId: categoryFilter }),
-        ...(stockFilter === 'low' && { lowStock: 'true' }),
       })
+
+      if (filters.search) params.set('search', filters.search)
+      if (filters.categories.length > 0) params.set('categories', filters.categories.join(','))
+      if (filters.suppliers.length > 0) params.set('suppliers', filters.suppliers.join(','))
+      if (filters.stockStatus !== 'all') params.set('stockStatus', filters.stockStatus)
+      if (filters.priceMin) params.set('priceMin', filters.priceMin)
+      if (filters.priceMax) params.set('priceMax', filters.priceMax)
+      if (filters.isActive !== 'all') params.set('isActive', filters.isActive)
+      if (filters.dateFrom) params.set('dateFrom', filters.dateFrom)
+      if (filters.dateTo) params.set('dateTo', filters.dateTo)
+
       const { data } = await api.get(`/products?${params}`)
       return data
     },
@@ -484,45 +527,25 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Input
-            placeholder="Search products..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <Select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All Categories' },
-              ...categories.map((cat: Category) => ({
-                value: cat.id,
-                label: cat.name,
-              })),
-            ]}
-          />
-          <Select
-            value={stockFilter}
-            onChange={e => setStockFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All Stock Levels' },
-              { value: 'low', label: 'Low Stock Only' },
-            ]}
-          />
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setSearch('')
-              setCategoryFilter('all')
-              setStockFilter('all')
-            }}
-          >
-            Clear Filters
-          </Button>
-        </div>
-      </Card>
+      {/* Filter Panel */}
+      <FilterPanel
+        filters={filters}
+        onFiltersChange={setFilters}
+        categories={categories}
+        suppliers={suppliers}
+        savedFilters={savedFilters}
+        onSaveFilter={(name, filterState) => {
+          const newSaved = [...savedFilters, { name, filters: filterState }]
+          setSavedFilters(newSaved)
+          localStorage.setItem('productFilters', JSON.stringify(newSaved))
+        }}
+        onLoadFilter={(filterState) => setFilters(filterState)}
+        onDeleteFilter={(name) => {
+          const newSaved = savedFilters.filter((f) => f.name !== name)
+          setSavedFilters(newSaved)
+          localStorage.setItem('productFilters', JSON.stringify(newSaved))
+        }}
+      />
 
       {/* Products Table */}
       <Card>

@@ -9,23 +9,78 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       search = '',
       categoryId,
       lowStock,
+      // New filters
+      categories,      // Comma-separated category IDs
+      suppliers,       // Comma-separated supplier IDs
+      stockStatus,     // 'low' | 'normal' | 'overstocked' | 'out' | 'all'
+      priceMin,
+      priceMax,
+      isActive,        // 'true' | 'false' | undefined (all)
+      dateFrom,
+      dateTo,
     } = req.query
 
     const pageNum = parseInt(page as string)
     const limitNum = parseInt(limit as string)
     const skip = (pageNum - 1) * limitNum
 
-    const where: any = {
-      isActive: true,
+    const where: any = {}
+
+    // Active status filter
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true'
+    } else {
+      // Default to showing only active products if not specified
+      where.isActive = true
+    }
+
+    // Legacy single category filter (for backward compatibility)
+    if (categoryId) {
+      where.categoryId = categoryId
+    }
+
+    // Multi-category filter (overrides single category)
+    if (categories && typeof categories === 'string') {
+      const categoryIds = categories.split(',').filter(id => id.trim())
+      if (categoryIds.length > 0) {
+        where.categoryId = { in: categoryIds }
+      }
+    }
+
+    // Multi-supplier filter
+    if (suppliers && typeof suppliers === 'string') {
+      const supplierIds = suppliers.split(',').filter(id => id.trim())
+      if (supplierIds.length > 0) {
+        where.supplierId = { in: supplierIds }
+      }
+    }
+
+    // Price range filter
+    if (priceMin !== undefined || priceMax !== undefined) {
+      where.price = {}
+      if (priceMin !== undefined) {
+        where.price.gte = parseFloat(priceMin as string)
+      }
+      if (priceMax !== undefined) {
+        where.price.lte = parseFloat(priceMax as string)
+      }
+    }
+
+    // Date range filter
+    if (dateFrom !== undefined || dateTo !== undefined) {
+      where.createdAt = {}
+      if (dateFrom !== undefined) {
+        where.createdAt.gte = new Date(dateFrom as string)
+      }
+      if (dateTo !== undefined) {
+        where.createdAt.lte = new Date(dateTo as string)
+      }
     }
 
     // No search filter in the where clause - we'll filter client-side for case-insensitive
     const hasSearch = search && typeof search === 'string' && search.trim() !== ''
 
-    if (categoryId) {
-      where.categoryId = categoryId
-    }
-
+    // Legacy low stock filter (for backward compatibility)
     if (lowStock === 'true') {
       where.quantity = { lte: prisma.product.fields.minStock }
     }
@@ -33,47 +88,50 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
     // For case-insensitive search in SQLite, fetch all and filter in-memory
     let products, total
 
+    // Fetch all products with where clause
+    const allProducts = await prisma.product.findMany({
+      where,
+      include: {
+        category: true,
+        supplier: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Filter by search term (case-insensitive)
+    let filtered = allProducts
     if (hasSearch) {
       const searchLower = (search as string).toLowerCase()
-
-      // Fetch all matching products (without search in where clause)
-      const allProducts = await prisma.product.findMany({
-        where,
-        include: {
-          category: true,
-          supplier: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      })
-
-      // Filter client-side for case-insensitive search
-      const filtered = allProducts.filter((p) => {
+      filtered = allProducts.filter((p) => {
         const nameMatch = p.name?.toLowerCase().includes(searchLower)
         const skuMatch = p.sku?.toLowerCase().includes(searchLower)
         const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower)
         const descMatch = p.description?.toLowerCase().includes(searchLower)
         return nameMatch || skuMatch || barcodeMatch || descMatch
       })
-
-      // Apply pagination
-      total = filtered.length
-      products = filtered.slice(skip, skip + limitNum)
-    } else {
-      // No search - use normal Prisma query with pagination
-      ;[products, total] = await Promise.all([
-        prisma.product.findMany({
-          where,
-          include: {
-            category: true,
-            supplier: true,
-          },
-          skip,
-          take: limitNum,
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.product.count({ where }),
-      ])
     }
+
+    // Filter by stock status
+    if (stockStatus && stockStatus !== 'all') {
+      filtered = filtered.filter((p) => {
+        switch (stockStatus) {
+          case 'out':
+            return p.quantity === 0
+          case 'low':
+            return p.quantity > 0 && p.quantity <= p.minStock
+          case 'normal':
+            return p.quantity > p.minStock && (p.maxStock === null || p.quantity <= p.maxStock)
+          case 'overstocked':
+            return p.maxStock !== null && p.quantity > p.maxStock
+          default:
+            return true
+        }
+      })
+    }
+
+    // Apply pagination
+    total = filtered.length
+    products = filtered.slice(skip, skip + limitNum)
 
     res.json({
       products,
