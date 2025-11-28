@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Button from './Button'
 import Input from './Input'
 import Select from './Select'
@@ -41,8 +41,33 @@ export default function FilterPanel({
     const [showSaveDialog, setShowSaveDialog] = useState(false)
     const [filterName, setFilterName] = useState('')
 
+    // Internal state for manual application
+    const [localFilters, setLocalFilters] = useState<FilterState>(filters)
+    const [isDirty, setIsDirty] = useState(false)
+
+    // Sync local state when parent filters change (e.g. from URL load or saved filter load)
+    useEffect(() => {
+        setLocalFilters(filters)
+        setIsDirty(false)
+    }, [filters])
+
+    const handleLocalChange = (updates: Partial<FilterState>) => {
+        setLocalFilters(prev => {
+            const newState = { ...prev, ...updates }
+            // Check if different from applied filters
+            const isDifferent = JSON.stringify(newState) !== JSON.stringify(filters)
+            setIsDirty(isDifferent)
+            return newState
+        })
+    }
+
+    const handleApply = () => {
+        onFiltersChange(localFilters)
+        setIsDirty(false)
+    }
+
     const handleClearAll = () => {
-        onFiltersChange({
+        const emptyState: FilterState = {
             search: '',
             categories: [],
             suppliers: [],
@@ -52,12 +77,15 @@ export default function FilterPanel({
             isActive: 'all',
             dateFrom: '',
             dateTo: '',
-        })
+        }
+        setLocalFilters(emptyState)
+        onFiltersChange(emptyState)
+        setIsDirty(false)
     }
 
     const handleSave = () => {
         if (filterName.trim() && onSaveFilter) {
-            onSaveFilter(filterName.trim(), filters)
+            onSaveFilter(filterName.trim(), localFilters) // Save what's currently in the form
             setFilterName('')
             setShowSaveDialog(false)
         }
@@ -106,8 +134,8 @@ export default function FilterPanel({
                         <Input
                             label="Search"
                             placeholder="Search by name, SKU, barcode..."
-                            value={filters.search}
-                            onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
+                            value={localFilters.search}
+                            onChange={(e) => handleLocalChange({ search: e.target.value })}
                         />
                     </div>
 
@@ -117,16 +145,16 @@ export default function FilterPanel({
                             label="Categories"
                             placeholder="Select categories..."
                             options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
-                            value={filters.categories}
-                            onChange={(categories) => onFiltersChange({ ...filters, categories })}
+                            value={localFilters.categories}
+                            onChange={(categories) => handleLocalChange({ categories })}
                         />
 
                         <MultiSelect
                             label="Suppliers"
                             placeholder="Select suppliers..."
                             options={suppliers.map((sup) => ({ value: sup.id, label: sup.name }))}
-                            value={filters.suppliers}
-                            onChange={(suppliers) => onFiltersChange({ ...filters, suppliers })}
+                            value={localFilters.suppliers}
+                            onChange={(suppliers) => handleLocalChange({ suppliers })}
                         />
                     </div>
 
@@ -134,8 +162,8 @@ export default function FilterPanel({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Select
                             label="Stock Status"
-                            value={filters.stockStatus}
-                            onChange={(e) => onFiltersChange({ ...filters, stockStatus: e.target.value })}
+                            value={localFilters.stockStatus}
+                            onChange={(e) => handleLocalChange({ stockStatus: e.target.value })}
                             options={[
                                 { value: 'all', label: 'All Stock Levels' },
                                 { value: 'out', label: 'Out of Stock' },
@@ -153,8 +181,8 @@ export default function FilterPanel({
                                         type="radio"
                                         name="isActive"
                                         value="all"
-                                        checked={filters.isActive === 'all'}
-                                        onChange={(e) => onFiltersChange({ ...filters, isActive: e.target.value })}
+                                        checked={localFilters.isActive === 'all'}
+                                        onChange={(e) => handleLocalChange({ isActive: e.target.value })}
                                         className="w-5 h-5 border-4 border-black cursor-pointer"
                                     />
                                     <span className="font-bold">All</span>
@@ -164,8 +192,8 @@ export default function FilterPanel({
                                         type="radio"
                                         name="isActive"
                                         value="true"
-                                        checked={filters.isActive === 'true'}
-                                        onChange={(e) => onFiltersChange({ ...filters, isActive: e.target.value })}
+                                        checked={localFilters.isActive === 'true'}
+                                        onChange={(e) => handleLocalChange({ isActive: e.target.value })}
                                         className="w-5 h-5 border-4 border-black cursor-pointer"
                                     />
                                     <span className="font-bold">Active</span>
@@ -175,8 +203,8 @@ export default function FilterPanel({
                                         type="radio"
                                         name="isActive"
                                         value="false"
-                                        checked={filters.isActive === 'false'}
-                                        onChange={(e) => onFiltersChange({ ...filters, isActive: e.target.value })}
+                                        checked={localFilters.isActive === 'false'}
+                                        onChange={(e) => handleLocalChange({ isActive: e.target.value })}
                                         className="w-5 h-5 border-4 border-black cursor-pointer"
                                     />
                                     <span className="font-bold">Inactive</span>
@@ -192,8 +220,8 @@ export default function FilterPanel({
                             type="number"
                             step="0.01"
                             placeholder="0.00"
-                            value={filters.priceMin}
-                            onChange={(e) => onFiltersChange({ ...filters, priceMin: e.target.value })}
+                            value={localFilters.priceMin}
+                            onChange={(e) => handleLocalChange({ priceMin: e.target.value })}
                         />
 
                         <Input
@@ -201,8 +229,8 @@ export default function FilterPanel({
                             type="number"
                             step="0.01"
                             placeholder="0.00"
-                            value={filters.priceMax}
-                            onChange={(e) => onFiltersChange({ ...filters, priceMax: e.target.value })}
+                            value={localFilters.priceMax}
+                            onChange={(e) => handleLocalChange({ priceMax: e.target.value })}
                         />
                     </div>
 
@@ -211,57 +239,40 @@ export default function FilterPanel({
                         <Input
                             label="From Date"
                             type="date"
-                            value={filters.dateFrom}
-                            onChange={(e) => onFiltersChange({ ...filters, dateFrom: e.target.value })}
+                            value={localFilters.dateFrom}
+                            onChange={(e) => handleLocalChange({ dateFrom: e.target.value })}
                         />
 
                         <Input
                             label="To Date"
                             type="date"
-                            value={filters.dateTo}
-                            onChange={(e) => onFiltersChange({ ...filters, dateTo: e.target.value })}
+                            value={localFilters.dateTo}
+                            onChange={(e) => handleLocalChange({ dateTo: e.target.value })}
                         />
                     </div>
 
                     {/* Saved Filters & Actions */}
-                    <div className="border-t-4 border-black pt-6 flex flex-wrap gap-3">
-                        {savedFilters.length > 0 && onLoadFilter && (
-                            <div className="flex-1 min-w-[200px]">
-                                <label className="block font-bold mb-2">Saved Filters</label>
-                                <div className="flex gap-2">
-                                    <select
-                                        className="flex-1 px-4 py-2 bg-white border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                                        onChange={(e) => {
-                                            const filter = savedFilters.find((f) => f.name === e.target.value)
-                                            if (filter) {
-                                                onLoadFilter(filter.filters)
-                                            }
-                                            e.target.value = ''
-                                        }}
-                                        defaultValue=""
-                                    >
-                                        <option value="" disabled>
-                                            Load saved filter...
-                                        </option>
-                                        {savedFilters.map((filter) => (
-                                            <option key={filter.name} value={filter.name}>
-                                                {filter.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {onDeleteFilter && (
+                    <div className="border-t-4 border-black pt-6 flex flex-wrap gap-3 items-end">
+                        <div className="flex-grow">
+                             {savedFilters.length > 0 && onLoadFilter && (
+                                <div className="min-w-[200px]">
+                                    <label className="block font-bold mb-2">Saved Filters</label>
+                                    <div className="flex gap-2">
                                         <select
-                                            className="px-4 py-2 bg-red-500 text-white border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                                            className="flex-1 px-4 py-2 bg-white border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                                             onChange={(e) => {
-                                                if (e.target.value && confirm(`Delete filter "${e.target.value}"?`)) {
-                                                    onDeleteFilter(e.target.value)
+                                                const filter = savedFilters.find((f) => f.name === e.target.value)
+                                                if (filter) {
+                                                    onLoadFilter(filter.filters)
+                                                    // Also update local state immediately so UI reflects loaded filter
+                                                    setLocalFilters(filter.filters)
                                                 }
                                                 e.target.value = ''
                                             }}
                                             defaultValue=""
                                         >
                                             <option value="" disabled>
-                                                Delete...
+                                                Load saved filter...
                                             </option>
                                             {savedFilters.map((filter) => (
                                                 <option key={filter.name} value={filter.name}>
@@ -269,14 +280,46 @@ export default function FilterPanel({
                                                 </option>
                                             ))}
                                         </select>
-                                    )}
+                                        {onDeleteFilter && (
+                                            <select
+                                                className="px-4 py-2 bg-red-500 text-white border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                                                onChange={(e) => {
+                                                    if (e.target.value && confirm(`Delete filter "${e.target.value}"?`)) {
+                                                        onDeleteFilter(e.target.value)
+                                                    }
+                                                    e.target.value = ''
+                                                }}
+                                                defaultValue=""
+                                            >
+                                                <option value="" disabled>
+                                                    Delete...
+                                                </option>
+                                                {savedFilters.map((filter) => (
+                                                    <option key={filter.name} value={filter.name}>
+                                                        {filter.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {onSaveFilter && hasActiveFilters && (
-                            <Button onClick={() => setShowSaveDialog(true)}>Save Current Filter</Button>
-                        )}
+                        <div className="flex gap-3">
+                            {onSaveFilter && (
+                                <Button variant="secondary" onClick={() => setShowSaveDialog(true)}>
+                                    Save Filter
+                                </Button>
+                            )}
+                            <Button
+                                onClick={handleApply}
+                                disabled={!isDirty}
+                                className={!isDirty ? 'opacity-50 cursor-not-allowed' : 'animate-pulse'}
+                            >
+                                Apply Filters
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}
