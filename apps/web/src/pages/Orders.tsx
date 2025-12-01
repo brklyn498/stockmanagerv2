@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import Button from '../components/Button'
 import Input from '../components/Input'
@@ -63,6 +64,7 @@ interface Supplier {
 
 export default function Orders() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null)
   const [isCreating, setIsCreating] = useState(false)
@@ -202,8 +204,8 @@ export default function Orders() {
     const unitPrice = currentItem.unitPrice
       ? parseFloat(currentItem.unitPrice)
       : formData.type === 'PURCHASE'
-      ? product.costPrice
-      : product.price
+        ? product.costPrice
+        : product.price
 
     setFormData({
       ...formData,
@@ -411,6 +413,12 @@ export default function Orders() {
                           className="px-3 py-1 bg-cyan-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
                         >
                           View
+                        </button>
+                        <button
+                          onClick={() => navigate(`/receipt/${order.id}`)}
+                          className="px-3 py-1 bg-green-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
+                        >
+                          Receipt
                         </button>
                         {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
                           <button
