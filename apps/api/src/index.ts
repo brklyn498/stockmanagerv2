@@ -9,7 +9,8 @@ import clientRoutes from './routes/clientRoutes'
 import stockMovementRoutes from './routes/stockMovementRoutes'
 import orderRoutes from './routes/orderRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
-import imageRoutes from './routes/imageRoutes' // Image routes
+import imageRoutes from './routes/imageRoutes'
+import reportRoutes from './routes/reportRoutes'
 import { errorHandler } from './middleware/errorHandler'
 import path from 'path'
 import { setupSwagger } from './swagger'
@@ -53,6 +54,7 @@ app.get('/', (_req, res) => {
       orders: '/api/orders',
       stockMovements: '/api/stock-movements',
       dashboard: '/api/dashboard',
+      reports: '/api/reports',
       docs: '/api-docs'
     }
   })
@@ -90,10 +92,32 @@ app.use('/api/clients', clientRoutes)
 app.use('/api/stock-movements', stockMovementRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/dashboard', dashboardRoutes)
-app.use('/api/products', imageRoutes) // Mount image routes under /api/products
+app.use('/api/images', imageRoutes)
+app.use('/api/reports', reportRoutes)
 
 // Error handling middleware (must be last)
 app.use(errorHandler)
+
+// Graceful shutdown handler setup
+const setupShutdownHandlers = (server: any) => {
+  process.on('SIGTERM', async () => {
+    console.log('📡 SIGTERM signal received: closing HTTP server gracefully')
+    server.close(async () => {
+      console.log('✅ HTTP server closed')
+      await disconnectDatabase()
+      process.exit(0)
+    })
+  })
+
+  process.on('SIGINT', async () => {
+    console.log('📡 SIGINT signal received: closing HTTP server gracefully')
+    server.close(async () => {
+      console.log('✅ HTTP server closed')
+      await disconnectDatabase()
+      process.exit(0)
+    })
+  })
+}
 
 // Initialize database and start server
 const startServer = async () => {
@@ -121,27 +145,6 @@ const startServer = async () => {
     console.error('❌ Failed to start server:', error)
     process.exit(1)
   }
-}
-
-// Graceful shutdown handler setup
-const setupShutdownHandlers = (server: any) => {
-  process.on('SIGTERM', async () => {
-    console.log('📡 SIGTERM signal received: closing HTTP server gracefully')
-    server.close(async () => {
-      console.log('✅ HTTP server closed')
-      await disconnectDatabase()
-      process.exit(0)
-    })
-  })
-
-  process.on('SIGINT', async () => {
-    console.log('📡 SIGINT signal received: closing HTTP server gracefully')
-    server.close(async () => {
-      console.log('✅ HTTP server closed')
-      await disconnectDatabase()
-      process.exit(0)
-    })
-  })
 }
 
 // Start the server

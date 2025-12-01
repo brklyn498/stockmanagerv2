@@ -9,6 +9,7 @@ import Suppliers from './pages/Suppliers'
 import Clients from './pages/Clients'
 import StockMovements from './pages/StockMovements'
 import Orders from './pages/Orders'
+import Reports from './pages/Reports'
 import Receipt from './pages/Receipt'
 import Layout from './components/Layout'
 
@@ -42,6 +43,7 @@ function App() {
           <Route path="/clients" element={<Layout><Clients /></Layout>} />
           <Route path="/stock-movements" element={<Layout><StockMovements /></Layout>} />
           <Route path="/orders" element={<Layout><Orders /></Layout>} />
+          <Route path="/reports" element={<Layout><Reports /></Layout>} />
           <Route path="/receipt/:id" element={<Receipt />} />
         </Routes>
       </BrowserRouter>

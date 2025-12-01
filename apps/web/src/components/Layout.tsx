@@ -22,6 +22,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Clients', path: '/clients' },
     { name: 'Stock Movements', path: '/stock-movements' },
     { name: 'Orders', path: '/orders' },
+    { name: 'Reports', path: '/reports' },
   ]
 
   // Setup keyboard shortcuts
