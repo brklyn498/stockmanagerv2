@@ -13,6 +13,8 @@ import FilterPanel, { FilterState } from '../components/FilterPanel'
 import ImageUpload from '../components/ImageUpload'
 import ProductsGrid from '../components/ProductsGrid'
 import QuickStockAdjust from '../components/QuickStockAdjust'
+import ColumnConfigModal, { ColumnConfig, DEFAULT_COLUMNS } from '../components/ColumnConfigModal'
+import { Settings } from 'lucide-react'
 import {
   Table,
   TableHeader,
@@ -79,6 +81,18 @@ export default function Products() {
   const handleViewModeChange = (mode: 'table' | 'cards' | 'compact') => {
     setViewMode(mode)
     localStorage.setItem('productsViewMode', mode)
+  }
+
+  // Column Configuration
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
+    const saved = localStorage.getItem('productsColumnConfig')
+    return saved ? JSON.parse(saved) : DEFAULT_COLUMNS
+  })
+  const [isColumnConfigOpen, setIsColumnConfigOpen] = useState(false)
+
+  const handleSaveColumnConfig = (config: ColumnConfig[]) => {
+    setColumnConfig(config)
+    localStorage.setItem('productsColumnConfig', JSON.stringify(config))
   }
 
   // Filter state (initialized from URL)
@@ -634,6 +648,16 @@ export default function Products() {
             >
               ≡ Compact
             </Button>
+            {viewMode !== 'cards' && (
+              <Button
+                variant="secondary"
+                onClick={() => setIsColumnConfigOpen(true)}
+                className="text-sm py-2 px-2"
+                title="Configure Columns"
+              >
+                <Settings size={18} />
+              </Button>
+            )}
           </div>
           {selectedIds.size > 0 && (
             <div className="flex gap-2">
@@ -723,7 +747,7 @@ export default function Products() {
           isLoading={productsLoading}
         />
       ) : (
-        <Card>
+        <Card className={viewMode === 'compact' ? 'p-2' : ''}>
           {productsLoading ? (
             <div className="text-center py-8 font-bold">Loading products...</div>
           ) : products.length === 0 ? (
@@ -735,7 +759,7 @@ export default function Products() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>
+                    <TableHead className={viewMode === 'compact' ? 'py-2 text-xs' : ''}>
                       <input
                         type="checkbox"
                         checked={selectedIds.size === products.length && products.length > 0}
@@ -743,19 +767,17 @@ export default function Products() {
                         className="w-5 h-5 border-4 border-black cursor-pointer"
                       />
                     </TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    {columnConfig.filter(c => c.isVisible).map(col => (
+                      <TableHead key={col.id} className={viewMode === 'compact' ? 'py-2 text-xs' : ''}>
+                        {col.label}
+                      </TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {products.map((product: Product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
+                    <TableRow key={product.id} className={viewMode === 'compact' ? 'hover:bg-yellow-50' : ''}>
+                      <TableCell className={viewMode === 'compact' ? 'py-1' : ''}>
                         <input
                           type="checkbox"
                           checked={selectedIds.has(product.id)}
@@ -763,103 +785,162 @@ export default function Products() {
                           className="w-5 h-5 border-4 border-black cursor-pointer"
                         />
                       </TableCell>
-                      <TableCell>{product.sku}</TableCell>
-                      <TableCell>
-                        <div
-                          className="flex gap-3 items-center cursor-pointer group"
-                          onClick={() => navigate(`/products/${product.id}`)}
-                        >
-                          <div className="w-12 h-12 flex-shrink-0 group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black">
-                            {product.imageUrl ? (
-                              <img
-                                src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                                <span className="text-xs">No Img</span>
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-bold underline decoration-transparent group-hover:decoration-black transition-all">{product.name}</div>
-                            {product.description && (
-                              <div className="text-sm text-gray-600">
-                                {product.description.substring(0, 50)}
-                                {product.description.length > 50 ? '...' : ''}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{product.category.name}</TableCell>
-                      <TableCell className="font-bold">
-                        ${product.price.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-bold">
-                            {product.quantity} {product.unit}
-                          </div>
-                          {getStockBadge(product.quantity, product.minStock)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {product.isActive ? (
-                          <Badge variant="success">Active</Badge>
-                        ) : (
-                          <Badge variant="danger">Inactive</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleOpenModal(product)}
-                            className="px-3 py-1 bg-cyan-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            className="px-3 py-1 bg-red-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
-                          >
-                            Delete
-                          </button>
-                          <button
-                            onClick={() => handleQuickStock(product)}
-                            className="px-3 py-1 bg-gray-200 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
-                            title="Adjust Stock"
-                          >
-                            ±
-                          </button>
-                          <div className="relative group">
-                            <button className="px-3 py-1 bg-gray-200 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5">
-                              ...
-                            </button>
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden group-hover:block z-10">
-                              <button
-                                onClick={() => handleDuplicate(product)}
-                                className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold border-b-2 border-black"
-                              >
-                                Duplicate
-                              </button>
-                              <button
-                                onClick={() => alert('Print label')}
-                                className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold border-b-2 border-black"
-                              >
-                                Print Label
-                              </button>
-                              <button
-                                onClick={() => alert('View History')}
-                                className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold"
-                              >
-                                History
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
+
+                      {columnConfig.filter(c => c.isVisible).map(col => {
+                        const isCompact = viewMode === 'compact'
+                        const cellClass = isCompact ? 'py-1 text-sm' : ''
+
+                        switch (col.id) {
+                          case 'image':
+                            return (
+                              <TableCell key={col.id} className={cellClass}>
+                                {isCompact ? (
+                                  <div className="w-8 h-8 flex-shrink-0 border border-black">
+                                    {product.imageUrl ? (
+                                      <img
+                                        src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-gray-100" />
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="w-12 h-12 flex-shrink-0 group-hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all border-2 border-black">
+                                    {product.imageUrl ? (
+                                      <img
+                                        src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}${product.imageUrl}`}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                        <span className="text-xs">No Img</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </TableCell>
+                            )
+                          case 'sku':
+                            return <TableCell key={col.id} className={cellClass}>{product.sku}</TableCell>
+                          case 'name':
+                            return (
+                              <TableCell key={col.id} className={cellClass}>
+                                <div
+                                  className="font-bold underline decoration-transparent group-hover:decoration-black transition-all cursor-pointer"
+                                  onClick={() => navigate(`/products/${product.id}`)}
+                                >
+                                  {product.name}
+                                </div>
+                                {!isCompact && product.description && (
+                                  <div className="text-sm text-gray-600">
+                                    {product.description.substring(0, 50)}
+                                    {product.description.length > 50 ? '...' : ''}
+                                  </div>
+                                )}
+                              </TableCell>
+                            )
+                          case 'category':
+                            return <TableCell key={col.id} className={cellClass}>{product.category.name}</TableCell>
+                          case 'supplier':
+                            return <TableCell key={col.id} className={cellClass}>{product.supplier?.name || '-'}</TableCell>
+                          case 'price':
+                            return <TableCell key={col.id} className={`${cellClass} font-bold`}>${product.price.toFixed(2)}</TableCell>
+                          case 'costPrice':
+                            return <TableCell key={col.id} className={cellClass}>${product.costPrice.toFixed(2)}</TableCell>
+                          case 'quantity':
+                            return (
+                              <TableCell key={col.id} className={cellClass}>
+                                {isCompact ? (
+                                  <span className="font-bold">{product.quantity}</span>
+                                ) : (
+                                  <div className="font-bold">{product.quantity} {product.unit}</div>
+                                )}
+                              </TableCell>
+                            )
+                          case 'stockStatus':
+                            return (
+                              <TableCell key={col.id} className={cellClass}>
+                                {isCompact ? (
+                                  getStockBadge(product.quantity, product.minStock)
+                                ) : (
+                                  <div className="space-y-1">
+                                    {getStockBadge(product.quantity, product.minStock)}
+                                  </div>
+                                )}
+                              </TableCell>
+                            )
+                          case 'isActive':
+                            return (
+                              <TableCell key={col.id} className={cellClass}>
+                                {product.isActive ? (
+                                  <Badge variant="success">Active</Badge>
+                                ) : (
+                                  <Badge variant="danger">Inactive</Badge>
+                                )}
+                              </TableCell>
+                            )
+                          case 'minStock':
+                            return <TableCell key={col.id} className={cellClass}>{product.minStock}</TableCell>
+                          case 'lastMovement':
+                            return <TableCell key={col.id} className={cellClass}>-</TableCell>
+                          case 'actions':
+                            return (
+                              <TableCell key={col.id} className={cellClass}>
+                                <div className={`flex gap-2 ${isCompact ? 'scale-90 origin-left' : ''}`}>
+                                  <button
+                                    onClick={() => handleOpenModal(product)}
+                                    className="px-3 py-1 bg-cyan-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(product.id)}
+                                    className="px-3 py-1 bg-red-400 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
+                                  >
+                                    Delete
+                                  </button>
+                                  <button
+                                    onClick={() => handleQuickStock(product)}
+                                    className="px-3 py-1 bg-gray-200 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5"
+                                    title="Adjust Stock"
+                                  >
+                                    ±
+                                  </button>
+                                  <div className="relative group">
+                                    <button className="px-3 py-1 bg-gray-200 border-2 border-black font-bold hover:translate-x-0.5 hover:translate-y-0.5">
+                                      ...
+                                    </button>
+                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hidden group-hover:block z-10">
+                                      <button
+                                        onClick={() => handleDuplicate(product)}
+                                        className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold border-b-2 border-black"
+                                      >
+                                        Duplicate
+                                      </button>
+                                      <button
+                                        onClick={() => alert('Print label')}
+                                        className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold border-b-2 border-black"
+                                      >
+                                        Print Label
+                                      </button>
+                                      <button
+                                        onClick={() => alert('View History')}
+                                        className="w-full text-left px-4 py-2 hover:bg-yellow-100 font-bold"
+                                      >
+                                        History
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                            )
+                          default:
+                            return <TableCell key={col.id} />
+                        }
+                      })}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1109,6 +1190,13 @@ export default function Products() {
             })
           }
         }}
+      />
+
+      <ColumnConfigModal
+        isOpen={isColumnConfigOpen}
+        onClose={() => setIsColumnConfigOpen(false)}
+        currentConfig={columnConfig}
+        onSave={handleSaveColumnConfig}
       />
     </div>
   )
