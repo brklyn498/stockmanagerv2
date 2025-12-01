@@ -1,6 +1,5 @@
 import React from 'react';
 import { ReceiptData } from './types';
-import { Package } from 'lucide-react';
 
 interface ReceiptHeaderProps {
     data: ReceiptData;
@@ -15,8 +14,12 @@ export const ReceiptHeader: React.FC<ReceiptHeaderProps> = ({ data }) => {
 
             <div className="p-6 pt-10 flex flex-col md:flex-row justify-between items-start">
                 <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Package size={24} strokeWidth={2.5} />
+                    <div className="flex items-center gap-3 mb-2">
+                        <img
+                            src="/pixel_logo.svg"
+                            alt="Pixel Logo"
+                            className="h-8 w-auto border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        />
                         <span className="font-bold text-lg tracking-wider">STOCK MANAGER</span>
                     </div>
                     <h1 className="text-5xl font-black uppercase tracking-tighter" style={{ fontFamily: 'Impact, sans-serif' }}>
