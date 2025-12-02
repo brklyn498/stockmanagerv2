@@ -15,7 +15,8 @@ import {
   TableHead,
   TableCell,
 } from '../components/Table'
-import { exportToCSV, formatMovementsForExport } from '../utils/exportCSV'
+import { exportToCSV, exportToExcel, formatMovementsForExport, MOVEMENT_EXPORT_COLUMNS } from '../utils/export'
+import ExportMenu, { ExportOptions } from '../components/ExportMenu'
 
 interface StockMovement {
   id: string
@@ -49,6 +50,10 @@ export default function StockMovements() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [page, setPage] = useState(1)
   const limit = 20
+
+  // Export state
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -130,13 +135,44 @@ export default function StockMovements() {
     createMutation.mutate(payload)
   }
 
-  const handleExport = () => {
-    if (movements.length === 0) {
-      alert('No movements to export')
-      return
+  const handleExport = async (options: ExportOptions) => {
+    setIsExporting(true)
+    try {
+      let dataToExport = []
+
+      if (options.scope === 'current_page') {
+        dataToExport = movements
+      } else if (options.scope === 'selected') {
+        dataToExport = [] // Not implemented
+      } else if (options.scope === 'all') {
+        const params = new URLSearchParams({
+          limit: '100000',
+        })
+        if (productFilter !== 'all') params.set('productId', productFilter)
+        if (typeFilter !== 'all') params.set('type', typeFilter)
+
+        const { data } = await api.get(`/stock-movements?${params}`)
+        dataToExport = data.movements
+      }
+
+      if (dataToExport.length === 0) {
+        alert('No data to export')
+        return
+      }
+
+      const formattedData = formatMovementsForExport(dataToExport)
+
+      if (options.format === 'csv') {
+        exportToCSV(formattedData, 'stock_movements')
+      } else {
+        await exportToExcel(formattedData, MOVEMENT_EXPORT_COLUMNS, 'stock_movements', 'Stock Movements')
+      }
+    } catch (error) {
+      console.error('Export failed', error)
+      alert('Failed to export data')
+    } finally {
+      setIsExporting(false)
     }
-    const formattedData = formatMovementsForExport(movements)
-    exportToCSV(formattedData, 'stock_movements')
   }
 
   const getTypeBadge = (type: string) => {
@@ -165,8 +201,8 @@ export default function StockMovements() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={handleExport}>
-            Export CSV
+          <Button variant="secondary" onClick={() => setIsExportMenuOpen(true)}>
+            Export
           </Button>
           <Button onClick={handleOpenModal}>Record Movement</Button>
         </div>
@@ -433,6 +469,16 @@ export default function StockMovements() {
           </div>
         </form>
       </Modal>
+
+      <ExportMenu
+        isOpen={isExportMenuOpen}
+        onClose={() => setIsExportMenuOpen(false)}
+        onExport={handleExport}
+        totalItems={movementsData?.total || 0}
+        selectedCount={0}
+        entityName="Stock Movements"
+        isLoading={isExporting}
+      />
     </div>
   )
 }

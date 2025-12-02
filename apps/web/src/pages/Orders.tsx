@@ -16,6 +16,8 @@ import {
   TableHead,
   TableCell,
 } from '../components/Table'
+import { exportToCSV, exportToExcel, formatOrdersForExport, ORDER_EXPORT_COLUMNS } from '../utils/export'
+import ExportMenu, { ExportOptions } from '../components/ExportMenu'
 
 interface Order {
   id: string
@@ -72,6 +74,10 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const limit = 10
+
+  // Export state
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -257,6 +263,48 @@ export default function Orders() {
     createMutation.mutate(payload)
   }
 
+  const handleExport = async (options: ExportOptions) => {
+    setIsExporting(true)
+    try {
+      let dataToExport = []
+
+      if (options.scope === 'current_page') {
+        dataToExport = orders
+      } else if (options.scope === 'selected') {
+        // Orders page doesn't have selection yet, but if it did...
+        // For now, scope 'selected' is disabled in menu if count is 0
+        dataToExport = []
+      } else if (options.scope === 'all') {
+        const params = new URLSearchParams({
+          limit: '100000',
+        })
+        if (typeFilter !== 'all') params.set('type', typeFilter)
+        if (statusFilter !== 'all') params.set('status', statusFilter)
+
+        const { data } = await api.get(`/orders?${params}`)
+        dataToExport = data.orders
+      }
+
+      if (dataToExport.length === 0) {
+        alert('No data to export')
+        return
+      }
+
+      const formattedData = formatOrdersForExport(dataToExport)
+
+      if (options.format === 'csv') {
+        exportToCSV(formattedData, 'orders')
+      } else {
+        await exportToExcel(formattedData, ORDER_EXPORT_COLUMNS, 'orders', 'Order History')
+      }
+    } catch (error) {
+      console.error('Export failed', error)
+      alert('Failed to export data')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const handleUpdateStatus = (orderId: string, newStatus: string) => {
     if (confirm(`Update order status to ${newStatus}?`)) {
       updateStatusMutation.mutate({ id: orderId, status: newStatus })
@@ -317,7 +365,12 @@ export default function Orders() {
             Manage purchase and sales orders
           </p>
         </div>
-        <Button onClick={handleOpenCreateModal}>Create Order</Button>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => setIsExportMenuOpen(true)}>
+            Export
+          </Button>
+          <Button onClick={handleOpenCreateModal}>Create Order</Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -774,6 +827,16 @@ export default function Orders() {
           </div>
         </Modal>
       )}
+
+      <ExportMenu
+        isOpen={isExportMenuOpen}
+        onClose={() => setIsExportMenuOpen(false)}
+        onExport={handleExport}
+        totalItems={ordersData?.total || 0}
+        selectedCount={0} // No selection implemented in Orders yet
+        entityName="Orders"
+        isLoading={isExporting}
+      />
     </div>
   )
 }

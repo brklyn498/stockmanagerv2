@@ -13,7 +13,7 @@ import {
   TableHead,
   TableCell,
 } from '../components/Table'
-import { exportToCSV } from '../utils/exportCSV'
+import { exportToCSV } from '../utils/export'
 
 interface Client {
   id: string
