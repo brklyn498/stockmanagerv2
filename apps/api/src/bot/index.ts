@@ -1,18 +1,18 @@
-import { Telegraf, Context } from 'telegraf';
-import { Update } from 'telegraf/types';
+import { Telegraf, Scenes } from 'telegraf';
 import { startHandler } from './handlers/start';
 import { helpHandler } from './handlers/help';
 import { menuHandler } from './handlers/menu';
 import { handleMenuCallback } from './handlers/callbacks';
 import { productsHandler, lowStockHandler, outOfStockHandler, productSearchHandler } from './handlers/products';
-import { stockHandler } from './handlers/stock';
+import { stockHandler, stockMovementsHandler, quickAddStockHandler, quickRemoveStockHandler } from './handlers/stock';
 import { ordersHandler } from './handlers/orders';
 import { reportsHandler } from './handlers/reports';
 import { settingsHandler } from './handlers/settings';
+import { prismaSession } from './middleware/session';
+import { BotContext } from './types';
+import { stockAdjustmentWizard } from './scenes/stockAdjustment';
 
-export interface BotContext extends Context<Update> {
-  // Add custom context properties here if needed
-}
+export { BotContext };
 
 let bot: Telegraf<BotContext> | null = null;
 
@@ -21,8 +21,6 @@ export function initializeBot(): Telegraf<BotContext> | null {
 
   if (!token) {
     console.log('⚠️  Telegram bot token not found in environment variables.');
-    console.log('   Please check your .env file and ensure TELEGRAM_BOT_TOKEN is set.');
-    console.log('   Bot functionality will be disabled.');
     return null;
   }
 
@@ -32,7 +30,17 @@ export function initializeBot(): Telegraf<BotContext> | null {
 
   bot = new Telegraf<BotContext>(token);
 
-  // Register command handlers
+  // 1. Session Middleware (Must be before stage)
+  bot.use(prismaSession());
+
+  // 2. Stage (Scenes) Middleware
+  const stage = new Scenes.Stage<BotContext>([
+    stockAdjustmentWizard
+    // Add other wizards here
+  ]);
+  bot.use(stage.middleware());
+
+  // 3. Global Commands
   bot.command('start', startHandler);
   bot.command('help', helpHandler);
   bot.command('menu', menuHandler);
@@ -48,6 +56,13 @@ export function initializeBot(): Telegraf<BotContext> | null {
     }
     return productSearchHandler(ctx, args.join(' '));
   });
+
+  // Stock commands
+  bot.command('stock', stockHandler);
+  bot.command('movements', stockMovementsHandler);
+  bot.command('add', quickAddStockHandler);
+  bot.command('remove', quickRemoveStockHandler);
+  bot.command('adjust', (ctx) => ctx.scene.enter('stock-adjustment'));
 
   // Register text handlers for menu buttons
   bot.hears('📦 Products', productsHandler);
@@ -74,22 +89,12 @@ export function initializeBot(): Telegraf<BotContext> | null {
       dropPendingUpdates: true,
     }).then(() => {
       console.log('🤖 Telegram bot started in polling mode');
-      console.log('   Send /start to your bot to begin!');
     }).catch(err => {
       console.error('❌ Failed to start Telegram bot:', err);
     });
 
-    // Enable graceful stop
-    process.once('SIGINT', () => {
-      console.log('🛑 Stopping Telegram bot...');
-      bot?.stop('SIGINT');
-    });
-    process.once('SIGTERM', () => {
-      console.log('🛑 Stopping Telegram bot...');
-      bot?.stop('SIGTERM');
-    });
-  } else {
-    console.log('🤖 Telegram bot initialized (webhook mode - needs webhook setup)');
+    process.once('SIGINT', () => bot?.stop('SIGINT'));
+    process.once('SIGTERM', () => bot?.stop('SIGTERM'));
   }
 
   return bot;

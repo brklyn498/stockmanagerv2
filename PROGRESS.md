@@ -80,19 +80,51 @@
 
 **Completed this session:**
    - Implemented **Phase T2: Product Commands**.
-   - Created `formatter.ts` for safe MarkdownV2 escaping and product card rendering.
-   - Implemented `productActionsKeyboard` and `paginationKeyboard`.
-   - Updated `/products` handler with pagination (10 items/page).
-   - Updated `/product [query]` handler to support rich single-product views with images and list views for multiple matches.
-   - Updated `/low` and `/out` commands with new rich formatting.
-   - Refactored `handleMenuCallback` to handle navigation and placeholders for future phases.
+   - Implemented **Phase T3: Stock Management**.
+   - Created `apps/api/src/bot/middleware/session.ts` for Prisma-backed session storage.
+   - Refactored `apps/api/src/bot/index.ts` to include session middleware and scenes.
+   - Implemented `/stock`, `/movements`, `/add`, `/remove` commands.
+   - Created `stockAdjustmentWizard` scene for multi-step adjustments.
+   - Integrated barcode scanning (simulated via Quagga) for product lookup in wizard.
+   - Added system bot user utility for tracking automated movements.
 
 **Next tasks:**
-1. Phase T3: Stock Management (Telegram Bot)
+1. Phase T4: Order Management (Telegram Bot)
 
 ---
 
 ## 📝 Session Log
+
+### 2025-12-02 (Session 23 - Telegram Bot Phase T3)
+- Started: Implementation of Phase T3 (Stock Management)
+- Completed:
+  - **Infrastructure:**
+    - Installed `jimp` and `quagga` for image/barcode processing.
+    - Implemented `prismaSession` middleware to persist bot state in SQLite `BotSession` table.
+    - Updated `BotContext` types to include Session and Wizard scenes.
+    - Refactored `initializeBot` to use `telegraf` Stage and Session.
+  - **Stock Commands:**
+    - `/stock`: Shows interactive menu for stock actions.
+    - `/movements`: Lists recent 10 stock movements with icons and formatting.
+    - `/add [sku] [qty]`: Quick command for adding stock.
+    - `/remove [sku] [qty]`: Quick command for removing stock.
+  - **Adjustment Wizard (`/adjust`):**
+    - Created multi-step Scene `stockAdjustmentWizard`.
+    - Step 1: User sends Product SKU, Name, or Photo.
+    - Step 2: Bot decodes barcode (if photo) or searches DB (if text).
+    - Step 3: User selects action (Add/Remove/Set).
+    - Step 4: User enters quantity.
+    - Step 5: User selects reason.
+    - Final: Bot updates DB and sends summary.
+  - **Barcode Scanning:**
+    - Implemented `decodeBarcodeFromUrl` utility using Jimp + Quagga.
+    - Integrated into the wizard's first step.
+  - **System User:**
+    - Created `getSystemBotUser` to ensure a valid `userId` exists for stock movements created via Telegram.
+- Verification:
+  - TypeScript compilation check.
+  - Code structure aligns with `TELEGRAM_BOT_ROADMAP.md`.
+- Status: Phase T3 Complete.
 
 ### 2025-12-02 (Session 22 - Bug Fixes & Documentation)
 - Started: Debugging reported issues with product images and updating documentation.
