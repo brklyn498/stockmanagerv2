@@ -91,6 +91,46 @@
 
 ## 📝 Session Log
 
+### 2025-12-02 (Session 20 - Telegram Bot Integration Phase T1)
+- Started: Implementation of Telegram Bot Foundation (Phase T1 of TELEGRAM_BOT_ROADMAP.md)
+- Completed:
+  - **Bot Token Setup:**
+    - Created bot via BotFather (@uzc_prstock_bot)
+    - Token: 8520369087:AAFvy5gapFFMNHwP5tEZyCSGR_oQmR_-kvI
+    - Added to `.env` file with BOT_MODE=polling
+  - **Database Models:**
+    - Added `TelegramUser` model with fields: telegramId, chatId, username, firstName, lastName, isAuthorized, role, notification preferences
+    - Added `BotSession` model for conversation state management
+    - Linked TelegramUser to User model via optional foreign key
+    - Ran migration: `npx prisma migrate dev --name add-telegram`
+  - **Bot Infrastructure:**
+    - Installed `telegraf` package in apps/api
+    - Created `apps/api/src/bot/` folder structure:
+      - `index.ts` - Bot initialization and lifecycle management
+      - `handlers/start.ts` - User registration and welcome flow
+      - `handlers/help.ts` - Command documentation
+      - `handlers/menu.ts` - Interactive menu display
+      - `keyboards/main.ts` - Keyboard UI components (reply and inline)
+  - **Commands Implemented:**
+    - `/start` - Registers new users (auto-authorized as VIEWER), shows welcome message with menu
+    - `/help` - Lists all available commands with categories
+    - `/menu` - Displays interactive menu with inline buttons
+  - **Integration:**
+    - Added `initializeBot()` call in Express server startup (`src/index.ts:132`)
+    - Bot runs in polling mode for development
+    - Error handling with global catch for bot errors
+  - **User Flow:**
+    - New users auto-created in database on `/start`
+    - Welcome message shows main menu with 6 buttons: Products, Stock, Orders, Reports, Settings, Help
+    - Menu persists with reply keyboard for easy access
+- Verification:
+  - Bot tested successfully in Telegram
+  - `/start` command creates user and shows welcome
+  - Menu buttons display correctly
+  - No console errors, bot initialized successfully
+- Status: Phase T1 (Bot Foundation) Complete
+- Next: Implement Phase T2 (Product Commands)
+
 ### 2025-12-01 (Session 19 - Stock Visualization)
 - Started: Implementation of Stock Level Visualization (Section 7 of PRODUCT_PAGE_SPECIFICS.md)
 - Completed:

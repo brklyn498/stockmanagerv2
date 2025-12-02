@@ -20,6 +20,7 @@ model User {
 
   stockMovements StockMovement[]
   orders         Order[]
+  telegramUsers  TelegramUser[]
 }
 
 model Category {
@@ -147,4 +148,34 @@ model Setting {
   id    String @id @default(cuid())
   key   String @unique
   value String
+}
+
+model TelegramUser {
+  id             String   @id @default(cuid())
+  telegramId     BigInt   @unique
+  chatId         BigInt
+  username       String?
+  firstName      String?
+  lastName       String?
+  isAuthorized   Boolean  @default(false)
+  role           String   @default("VIEWER")  // ADMIN, MANAGER, STAFF, VIEWER
+  notifyLowStock Boolean  @default(true)
+  notifyOrders   Boolean  @default(true)
+  dailyReport    Boolean  @default(false)
+  weeklyReport   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+}
+
+model BotSession {
+  id         String   @id @default(cuid())
+  telegramId BigInt   @unique
+  state      String   @default("IDLE")
+  data       String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

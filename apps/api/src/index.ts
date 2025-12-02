@@ -17,6 +17,7 @@ import { setupSwagger } from './swagger'
 import { connectDatabase, disconnectDatabase } from './utils/db'
 import { prepareDatabase } from './utils/cleanup'
 import prisma from './utils/db'
+import { initializeBot } from './bot'
 
 dotenv.config()
 
@@ -127,6 +128,9 @@ const startServer = async () => {
 
     // Connect to database
     await connectDatabase()
+
+    // Initialize Telegram bot
+    initializeBot()
 
     // Start HTTP server
     const server = app.listen(PORT, () => {
