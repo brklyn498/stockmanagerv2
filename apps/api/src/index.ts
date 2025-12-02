@@ -93,7 +93,7 @@ app.use('/api/clients', clientRoutes)
 app.use('/api/stock-movements', stockMovementRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/dashboard', dashboardRoutes)
-app.use('/api/images', imageRoutes)
+app.use('/api/products', imageRoutes)
 app.use('/api/reports', reportRoutes)
 
 // Error handling middleware (must be last)

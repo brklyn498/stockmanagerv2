@@ -45,6 +45,8 @@ export default function ProductCard({ product, onEdit, onDelete, onQuickStock, o
         product.images?.[0]?.url ||
         product.imageUrl
 
+    const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
+
     return (
         <div
             className="group bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
@@ -54,7 +56,7 @@ export default function ProductCard({ product, onEdit, onDelete, onQuickStock, o
             <div className="relative aspect-square bg-gray-100 border-b-4 border-black overflow-hidden">
                 {primaryImage ? (
                     <img
-                        src={`http://localhost:3001${primaryImage}`}
+                        src={`${API_URL}${primaryImage}`}
                         alt={product.name}
                         className="w-full h-full object-cover"
                     />
@@ -139,10 +141,10 @@ export default function ProductCard({ product, onEdit, onDelete, onQuickStock, o
 
                 {/* Stock Row */}
                 <div className="pt-2 border-t-2 border-black space-y-2">
-                    <StockLevelBar 
-                        quantity={product.quantity} 
-                        minStock={product.minStock} 
-                        maxStock={product.maxStock} 
+                    <StockLevelBar
+                        quantity={product.quantity}
+                        minStock={product.minStock}
+                        maxStock={product.maxStock}
                     />
                 </div>
             </div>

@@ -103,8 +103,17 @@ export const deleteImage = async (req: Request, res: Response) => {
     const filepath = path.join(UPLOAD_DIR, filename);
     const thumbnailPath = path.join(UPLOAD_DIR, `thumb-${filename}`);
 
-    if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
-    if (fs.existsSync(thumbnailPath)) fs.unlinkSync(thumbnailPath);
+    try {
+      if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+    } catch (err) {
+      console.error(`[WARNING] Failed to delete file ${filepath}:`, err);
+    }
+
+    try {
+      if (fs.existsSync(thumbnailPath)) fs.unlinkSync(thumbnailPath);
+    } catch (err) {
+      console.error(`[WARNING] Failed to delete thumbnail ${thumbnailPath}:`, err);
+    }
 
     // Delete record
     await prisma.productImage.delete({
