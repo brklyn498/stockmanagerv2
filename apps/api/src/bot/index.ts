@@ -16,12 +16,15 @@ export function initializeBot(): Telegraf<BotContext> | null {
   const token = process.env.TELEGRAM_BOT_TOKEN;
 
   if (!token) {
-    console.log('⚠️  Telegram bot token not found. Bot will not start.');
-    console.log('   Add TELEGRAM_BOT_TOKEN to .env to enable Telegram bot.');
+    console.log('⚠️  Telegram bot token not found in environment variables.');
+    console.log('   Please check your .env file and ensure TELEGRAM_BOT_TOKEN is set.');
+    console.log('   Bot functionality will be disabled.');
     return null;
   }
 
-  console.log('🤖 Initializing Telegram bot...');
+  // Mask token for security in logs
+  const maskedToken = token.substring(0, 5) + '...' + token.substring(token.length - 5);
+  console.log(`🤖 Initializing Telegram bot with token: ${maskedToken}`);
 
   bot = new Telegraf<BotContext>(token);
 
@@ -41,6 +44,47 @@ export function initializeBot(): Telegraf<BotContext> | null {
     }
     return productSearchHandler(ctx, args.join(' '));
   });
+
+  // Register text handlers for menu buttons
+  bot.hears('📦 Products', productsHandler);
+  bot.hears('📊 Stock', (ctx) => ctx.reply(
+    '📊 *Stock Management*\n\n' +
+    'Stock features:\n' +
+    '/stock - Stock menu\n' +
+    '/add [sku] [qty] - Add stock\n' +
+    '/remove [sku] [qty] - Remove stock\n' +
+    '/movements - Recent movements\n\n' +
+    '_Stock commands coming soon!_',
+    { parse_mode: 'Markdown' }
+  ));
+  bot.hears('📋 Orders', (ctx) => ctx.reply(
+    '📋 *Orders*\n\n' +
+    'Order features:\n' +
+    '/orders - View recent orders\n' +
+    '/order [id] - Order details\n\n' +
+    '_Order commands coming soon!_',
+    { parse_mode: 'Markdown' }
+  ));
+  bot.hears('📈 Reports', (ctx) => ctx.reply(
+    '📈 *Reports*\n\n' +
+    'Available reports:\n' +
+    '/report inventory - Inventory summary\n' +
+    '/report movements - Movement report\n' +
+    '/report value - Inventory valuation\n\n' +
+    '_Report commands coming soon!_',
+    { parse_mode: 'Markdown' }
+  ));
+  bot.hears('⚙️ Settings', (ctx) => ctx.reply(
+    '⚙️ *Settings*\n\n' +
+    'Notification preferences:\n' +
+    '• Low stock alerts\n' +
+    '• Order notifications\n' +
+    '• Daily reports\n' +
+    '• Weekly summaries\n\n' +
+    '_Settings coming soon!_',
+    { parse_mode: 'Markdown' }
+  ));
+  bot.hears('❓ Help', helpHandler);
 
   // Register callback query handlers for inline buttons
   bot.on('callback_query', handleMenuCallback);
