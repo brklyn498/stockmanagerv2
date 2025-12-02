@@ -179,4 +179,4 @@ process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) =>
   // DO NOT exit: process.exit(1)
 })
 
-console.log('🛡️  Global error handlers installed - server is crash-proof')
+console.log('🛡️  Global error handlers installed - server is crash-proof ')
