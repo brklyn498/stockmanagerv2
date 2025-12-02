@@ -5,6 +5,10 @@ import { helpHandler } from './handlers/help';
 import { menuHandler } from './handlers/menu';
 import { handleMenuCallback } from './handlers/callbacks';
 import { productsHandler, lowStockHandler, outOfStockHandler, productSearchHandler } from './handlers/products';
+import { stockHandler } from './handlers/stock';
+import { ordersHandler } from './handlers/orders';
+import { reportsHandler } from './handlers/reports';
+import { settingsHandler } from './handlers/settings';
 
 export interface BotContext extends Context<Update> {
   // Add custom context properties here if needed
@@ -47,43 +51,10 @@ export function initializeBot(): Telegraf<BotContext> | null {
 
   // Register text handlers for menu buttons
   bot.hears('📦 Products', productsHandler);
-  bot.hears('📊 Stock', (ctx) => ctx.reply(
-    '📊 *Stock Management*\n\n' +
-    'Stock features:\n' +
-    '/stock - Stock menu\n' +
-    '/add [sku] [qty] - Add stock\n' +
-    '/remove [sku] [qty] - Remove stock\n' +
-    '/movements - Recent movements\n\n' +
-    '_Stock commands coming soon!_',
-    { parse_mode: 'Markdown' }
-  ));
-  bot.hears('📋 Orders', (ctx) => ctx.reply(
-    '📋 *Orders*\n\n' +
-    'Order features:\n' +
-    '/orders - View recent orders\n' +
-    '/order [id] - Order details\n\n' +
-    '_Order commands coming soon!_',
-    { parse_mode: 'Markdown' }
-  ));
-  bot.hears('📈 Reports', (ctx) => ctx.reply(
-    '📈 *Reports*\n\n' +
-    'Available reports:\n' +
-    '/report inventory - Inventory summary\n' +
-    '/report movements - Movement report\n' +
-    '/report value - Inventory valuation\n\n' +
-    '_Report commands coming soon!_',
-    { parse_mode: 'Markdown' }
-  ));
-  bot.hears('⚙️ Settings', (ctx) => ctx.reply(
-    '⚙️ *Settings*\n\n' +
-    'Notification preferences:\n' +
-    '• Low stock alerts\n' +
-    '• Order notifications\n' +
-    '• Daily reports\n' +
-    '• Weekly summaries\n\n' +
-    '_Settings coming soon!_',
-    { parse_mode: 'Markdown' }
-  ));
+  bot.hears('📊 Stock', stockHandler);
+  bot.hears('📋 Orders', ordersHandler);
+  bot.hears('📈 Reports', reportsHandler);
+  bot.hears('⚙️ Settings', settingsHandler);
   bot.hears('❓ Help', helpHandler);
 
   // Register callback query handlers for inline buttons
