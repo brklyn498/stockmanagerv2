@@ -62,7 +62,7 @@ export default function Dashboard() {
     },
   })
 
-  const { data: lowStockData, isError: lowStockError } = useQuery({
+  const { data: lowStockData } = useQuery({
     queryKey: ['low-stock-alerts'],
     queryFn: async () => {
       const response = await api.get('/dashboard/low-stock')
@@ -70,7 +70,7 @@ export default function Dashboard() {
     },
   })
 
-  const { data: recentMovementsData, isError: movementsError } = useQuery({
+  const { data: recentMovementsData } = useQuery({
     queryKey: ['recent-movements'],
     queryFn: async () => {
       const response = await api.get('/dashboard/recent-movements')

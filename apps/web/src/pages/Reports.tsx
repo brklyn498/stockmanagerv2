@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FileText, TrendingDown, ShoppingCart, Printer } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';

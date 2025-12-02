@@ -217,7 +217,7 @@ describe('CSV Export Utility', () => {
   describe('exportToCSV', () => {
     let downloadCSVSpy: any;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       // Mock downloadCSV to avoid DOM manipulation
       downloadCSVSpy = vi.fn();
       vi.spyOn(

@@ -14,6 +14,7 @@ interface TableBodyProps {
 interface TableRowProps {
   children: React.ReactNode
   onClick?: () => void
+  className?: string
 }
 
 interface TableHeadProps {
@@ -21,9 +22,10 @@ interface TableHeadProps {
   className?: string
 }
 
-interface TableCellProps {
-  children: React.ReactNode
+export interface TableCellProps {
+  children?: React.ReactNode
   className?: string
+  colSpan?: number
 }
 
 export function Table({ children, className = '' }: TableProps) {
@@ -48,12 +50,12 @@ export function TableBody({ children }: TableBodyProps) {
   return <tbody>{children}</tbody>
 }
 
-export function TableRow({ children, onClick }: TableRowProps) {
+export function TableRow({ children, onClick, className = '' }: TableRowProps) {
   return (
     <tr
       className={`border-b-2 border-black hover:bg-yellow-100 ${
         onClick ? 'cursor-pointer' : ''
-      }`}
+      } ${className}`}
       onClick={onClick}
     >
       {children}
@@ -71,9 +73,10 @@ export function TableHead({ children, className = '' }: TableHeadProps) {
   )
 }
 
-export function TableCell({ children, className = '' }: TableCellProps) {
+export function TableCell({ children, className = '', colSpan }: TableCellProps) {
   return (
     <td
+      colSpan={colSpan}
       className={`px-4 py-3 border-r-2 border-black last:border-r-0 font-medium ${className}`}
     >
       {children}

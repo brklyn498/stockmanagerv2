@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
 import Button from '../components/Button'
-import Card from '../components/Card'
-import Badge from '../components/Badge'
+import StockLevelBar from '../components/StockLevelBar'
+import StockStatusBadge from '../components/StockStatusBadge'
 import ProductImage from '../components/ProductImage'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -44,14 +44,6 @@ export default function ProductDetail() {
     return <div className="text-center py-10 font-bold text-xl">Product not found</div>
   }
 
-  const stockStatus = (qty: number, min: number) => {
-    if (qty === 0) return { label: 'Out of Stock', color: 'bg-red-500' }
-    if (qty <= min) return { label: 'Low Stock', color: 'bg-red-400' }
-    if (qty <= min * 1.5) return { label: 'Near Low', color: 'bg-orange-400' }
-    return { label: 'Normal', color: 'bg-green-400' }
-  }
-
-  const status = stockStatus(productData.quantity, productData.minStock)
   const margin = productData.price > 0
     ? ((productData.price - productData.costPrice) / productData.price * 100).toFixed(1)
     : '0.0'
@@ -101,17 +93,33 @@ export default function ProductDetail() {
 
         {/* Right: Info & Metrics */}
         <div className="md:col-span-2 space-y-6">
+           {/* Stock Visualization */}
+           <div className="bg-white p-6 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+             <h3 className="font-bold text-lg mb-4">Stock Status</h3>
+             <StockLevelBar 
+               quantity={productData.quantity} 
+               minStock={productData.minStock} 
+               maxStock={productData.maxStock} 
+               className="mb-4"
+             />
+             <div className="flex justify-between items-center mt-2">
+               <StockStatusBadge 
+                 quantity={productData.quantity} 
+                 minStock={productData.minStock} 
+                 maxStock={productData.maxStock}
+               />
+               <span className="text-sm font-bold text-gray-500">
+                 Min Stock: {productData.minStock} | Max: {productData.maxStock || 'None'}
+               </span>
+             </div>
+           </div>
+
            {/* Metrics Row */}
            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
              <MetricCard label="Stock" value={`${productData.quantity} ${productData.unit}`} />
              <MetricCard label="Value" value={`$${(productData.quantity * productData.costPrice).toLocaleString()}`} />
              <MetricCard label="Retail Value" value={`$${(productData.quantity * productData.price).toLocaleString()}`} />
              <MetricCard label="Profit Margin" value={`${margin}%`} color={parseFloat(margin) > 30 ? 'text-green-600' : 'text-orange-600'} />
-
-             <div className={`p-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${status.color}`}>
-                <div className="text-xs font-bold uppercase tracking-wide opacity-80">Status</div>
-                <div className="text-xl font-black mt-1">{status.label}</div>
-             </div>
 
              <MetricCard label="Days of Stock" value={analyticsData?.daysOfStock || '...'} />
              <MetricCard label="Avg Daily Sales" value={analyticsData?.avgDailySales || '...'} />

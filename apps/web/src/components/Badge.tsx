@@ -1,6 +1,6 @@
 interface BadgeProps {
   children: React.ReactNode
-  variant?: 'success' | 'warning' | 'danger' | 'info'
+  variant?: 'success' | 'warning' | 'danger' | 'info' | 'purple'
   className?: string
 }
 
@@ -14,6 +14,7 @@ export default function Badge({
     warning: 'neo-badge-warning',
     danger: 'neo-badge-danger',
     info: 'neo-badge-info',
+    purple: 'neo-badge-purple',
   }
 
   return (

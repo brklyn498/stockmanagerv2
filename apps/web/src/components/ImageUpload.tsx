@@ -1,7 +1,5 @@
-import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { X, Star, Upload, ImageIcon } from 'lucide-react';
-import Button from './Button';
+import { X, Star, Upload } from 'lucide-react';
 
 interface ImageUploadProps {
   onDrop: (files: File[]) => void;

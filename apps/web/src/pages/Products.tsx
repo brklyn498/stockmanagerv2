@@ -13,6 +13,7 @@ import FilterPanel, { FilterState } from '../components/FilterPanel'
 import ImageUpload from '../components/ImageUpload'
 import ProductsGrid from '../components/ProductsGrid'
 import QuickStockAdjust from '../components/QuickStockAdjust'
+import StockStatusBadge from '../components/StockStatusBadge'
 import ColumnConfigModal, { ColumnConfig, DEFAULT_COLUMNS } from '../components/ColumnConfigModal'
 import { Settings } from 'lucide-react'
 import {
@@ -596,18 +597,13 @@ export default function Products() {
     exportToCSV(formattedData, 'products')
   }
 
-  const getStockBadge = (quantity: number, minStock: number) => {
-    if (quantity === 0) {
-      return <Badge variant="danger">Out of Stock</Badge>
-    }
-    if (quantity <= minStock) {
-      return <Badge variant="danger">Low Stock</Badge>
-    }
-    if (quantity <= minStock * 1.5) {
-      return <Badge variant="warning">Near Low</Badge>
-    }
-    return <Badge variant="success">Normal</Badge>
-  }
+  // Calculate stock stats
+  const stockStats = products.reduce((acc: any, product: Product) => {
+    if (product.quantity === 0) acc.out++;
+    else if (product.quantity < product.minStock) acc.low++;
+    else if (product.maxStock && product.quantity > product.maxStock) acc.over++;
+    return acc;
+  }, { out: 0, low: 0, over: 0 });
 
   return (
     <div>
@@ -615,9 +611,39 @@ export default function Products() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold mb-2">Products</h1>
-          <p className="text-gray-700 font-medium">
-            Manage your product inventory
-          </p>
+          <div className="flex gap-4 items-center mb-2">
+            <p className="text-gray-700 font-medium">
+              Manage your product inventory
+            </p>
+            {(stockStats.out > 0 || stockStats.low > 0 || stockStats.over > 0) && (
+              <div className="flex gap-2 text-sm font-bold">
+                 {stockStats.low > 0 && (
+                   <span 
+                     className="text-orange-600 cursor-pointer hover:underline"
+                     onClick={() => setFilters(prev => ({ ...prev, stockStatus: 'low' }))}
+                   >
+                     {stockStats.low} Low Stock
+                   </span>
+                 )}
+                 {stockStats.out > 0 && (
+                   <span 
+                     className="text-red-600 cursor-pointer hover:underline"
+                     onClick={() => setFilters(prev => ({ ...prev, stockStatus: 'out_of_stock' }))}
+                   >
+                     {stockStats.out} Out of Stock
+                   </span>
+                 )}
+                 {stockStats.over > 0 && (
+                   <span 
+                     className="text-purple-600 cursor-pointer hover:underline"
+                     onClick={() => setFilters(prev => ({ ...prev, stockStatus: 'overstocked' }))}
+                   >
+                     {stockStats.over} Overstocked
+                   </span>
+                 )}
+              </div>
+            )}
+          </div>
           {selectedIds.size > 0 && (
             <div className="mt-2">
               <Badge variant="success">{selectedIds.size} product(s) selected</Badge>
@@ -863,13 +889,13 @@ export default function Products() {
                           case 'stockStatus':
                             return (
                               <TableCell key={col.id} className={cellClass}>
-                                {isCompact ? (
-                                  getStockBadge(product.quantity, product.minStock)
-                                ) : (
-                                  <div className="space-y-1">
-                                    {getStockBadge(product.quantity, product.minStock)}
-                                  </div>
-                                )}
+                                <StockStatusBadge 
+                                  quantity={product.quantity} 
+                                  minStock={product.minStock} 
+                                  maxStock={product.maxStock}
+                                  showIcon={!isCompact}
+                                  className={isCompact ? 'text-xs py-0.5' : ''}
+                                />
                               </TableCell>
                             )
                           case 'isActive':

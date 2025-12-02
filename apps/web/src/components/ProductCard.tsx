@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import Button from './Button'
-import Badge from './Badge'
+import StockLevelBar from './StockLevelBar'
 
 interface ProductCardProps {
     product: {
@@ -39,21 +39,6 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onEdit, onDelete, onQuickStock, onDuplicate }: ProductCardProps) {
     const navigate = useNavigate()
-
-    const getStockBadge = () => {
-        const { quantity, minStock, maxStock } = product
-
-        if (quantity === 0) {
-            return <Badge variant="danger">Out</Badge>
-        }
-        if (quantity <= minStock) {
-            return <Badge variant="danger">Low</Badge>
-        }
-        if (maxStock && quantity > maxStock) {
-            return <Badge variant="info">Over</Badge>
-        }
-        return <Badge variant="success">Normal</Badge>
-    }
 
     // Get primary image or first image
     const primaryImage = product.images?.find(img => img.isPrimary)?.url ||
@@ -153,14 +138,12 @@ export default function ProductCard({ product, onEdit, onDelete, onQuickStock, o
                 </p>
 
                 {/* Stock Row */}
-                <div className="flex items-center justify-between pt-2 border-t-2 border-black">
-                    <div>
-                        <p className="text-xs font-bold text-gray-600 uppercase">Stock</p>
-                        <p className="text-lg font-black">{product.quantity}</p>
-                    </div>
-                    <div>
-                        {getStockBadge()}
-                    </div>
+                <div className="pt-2 border-t-2 border-black space-y-2">
+                    <StockLevelBar 
+                        quantity={product.quantity} 
+                        minStock={product.minStock} 
+                        maxStock={product.maxStock} 
+                    />
                 </div>
             </div>
         </div>
