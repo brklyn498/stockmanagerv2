@@ -11,7 +11,7 @@ type ProductWithRelations = Product & {
   supplier: Supplier | null;
 };
 
-export function formatProductCard(product: ProductWithRelations): string {
+export function formatProductCard(product: any): string { // Using any loosely to avoid strict relation checks if types are missing
   const status = getStockStatus(product);
 
   // Calculate margin safely
@@ -22,7 +22,7 @@ export function formatProductCard(product: ProductWithRelations): string {
   }
 
   const safeName = escapeMarkdownV2(product.name);
-  const safeCategory = escapeMarkdownV2(product.category.name);
+  const safeCategory = product.category ? escapeMarkdownV2(product.category.name) : 'N/A';
   const safeSupplier = product.supplier ? escapeMarkdownV2(product.supplier.name) : 'N/A';
   const safeSku = escapeMarkdownV2(product.sku);
 
@@ -79,7 +79,7 @@ export function getStockStatusEmoji(product: { quantity: number; minStock: numbe
   return '✅';
 }
 
-function formatRelativeTime(date: Date): string {
+export function formatRelativeTime(date: Date): string {
   const now = new Date();
   const diff = now.getTime() - new Date(date).getTime();
 
