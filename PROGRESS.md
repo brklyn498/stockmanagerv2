@@ -95,6 +95,28 @@
 
 ## 📝 Session Log
 
+### 2025-12-02 (Session 23b - Bot Debugging & Server Recovery)
+- Started: Debugging "Products" button failure and server crashes.
+- Completed:
+  - **Circular Dependency Fix:**
+    - Identified and resolved circular imports between `bot/index.ts` and handlers.
+    - Moved `BotContext` definition to `types.ts` and updated all imports.
+  - **ESM Compatibility:**
+    - Fixed `ERR_MODULE_NOT_FOUND` crashes by adding `.ts` extensions to all relative imports in the bot module.
+    - Updated imports to use `import type` for interfaces where appropriate.
+  - **Dependency Management:**
+    - Installed missing `jimp` and `quagga` packages required for barcode features.
+    - Fixed `jimp` import syntax to match the installed version.
+  - **Server Configuration:**
+    - Resolved port conflicts between backend (3101) and frontend (3100).
+    - Updated `apps/api/src/index.ts` to default to port 3101 to match frontend proxy.
+- Verification:
+  - Backend starts successfully on port 3101.
+  - Frontend starts successfully on port 3100.
+  - Database connection verified.
+  - Bot initialized without errors.
+- Status: System fully operational.
+
 ### 2025-12-02 (Session 23 - Telegram Bot Phase T3)
 - Started: Implementation of Phase T3 (Stock Management)
 - Completed:
