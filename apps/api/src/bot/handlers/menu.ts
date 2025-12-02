@@ -1,5 +1,5 @@
 import { BotContext } from '../index';
-import { getMainMenuKeyboard, getMainMenuInline } from '../keyboards/main';
+import { getMainMenuInline } from '../keyboards/main';
 
 export async function menuHandler(ctx: BotContext) {
   const menuMessage = `📱 *Main Menu*

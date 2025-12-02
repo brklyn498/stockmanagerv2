@@ -3,6 +3,8 @@ import { Update } from 'telegraf/types';
 import { startHandler } from './handlers/start';
 import { helpHandler } from './handlers/help';
 import { menuHandler } from './handlers/menu';
+import { handleMenuCallback } from './handlers/callbacks';
+import { productsHandler, lowStockHandler, outOfStockHandler, productSearchHandler } from './handlers/products';
 
 export interface BotContext extends Context<Update> {
   // Add custom context properties here if needed
@@ -27,6 +29,21 @@ export function initializeBot(): Telegraf<BotContext> | null {
   bot.command('start', startHandler);
   bot.command('help', helpHandler);
   bot.command('menu', menuHandler);
+
+  // Product commands
+  bot.command('products', productsHandler);
+  bot.command('low', lowStockHandler);
+  bot.command('out', outOfStockHandler);
+  bot.command('product', (ctx) => {
+    const args = ctx.message.text.split(' ').slice(1);
+    if (args.length === 0) {
+      return ctx.reply('Please provide a product name or SKU.\nExample: /product laptop');
+    }
+    return productSearchHandler(ctx, args.join(' '));
+  });
+
+  // Register callback query handlers for inline buttons
+  bot.on('callback_query', handleMenuCallback);
 
   // Error handling
   bot.catch((err, ctx) => {
