@@ -24,7 +24,8 @@ import {
   TableHead,
   TableCell,
 } from '../components/Table'
-import { exportToCSV, formatProductsForExport } from '../utils/exportCSV'
+import { exportToCSV, exportToExcel, formatProductsForExport, PRODUCT_EXPORT_COLUMNS } from '../utils/export'
+import ExportMenu, { ExportOptions } from '../components/ExportMenu'
 
 interface Product {
   id: string
@@ -139,6 +140,10 @@ export default function Products() {
   const [bulkActionType, setBulkActionType] = useState<
     'category' | 'supplier' | 'prices' | 'stock' | 'activate' | 'deactivate' | 'delete'
   >('category')
+
+  // Export state
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Image Upload State
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
@@ -588,13 +593,80 @@ export default function Products() {
     setSelectedIds(newSet)
   }
 
-  const handleExport = () => {
-    if (products.length === 0) {
-      alert('No products to export')
-      return
+  const handleExport = async (options: ExportOptions) => {
+    setIsExporting(true)
+    try {
+      let dataToExport = []
+
+      if (options.scope === 'current_page') {
+        dataToExport = products
+      } else if (options.scope === 'selected') {
+        dataToExport = products.filter((p: Product) => selectedIds.has(p.id))
+      } else if (options.scope === 'all') {
+        // Fetch all products matching current filters
+        const params = new URLSearchParams({
+          limit: '100000', // Large limit for "all"
+        })
+
+        // Apply current filters
+        if (filters.search) params.set('search', filters.search)
+        if (filters.categories.length > 0) params.set('categories', filters.categories.join(','))
+        if (filters.suppliers.length > 0) params.set('suppliers', filters.suppliers.join(','))
+        if (filters.stockStatus !== 'all') params.set('stockStatus', filters.stockStatus)
+        if (filters.priceMin) params.set('priceMin', filters.priceMin)
+        if (filters.priceMax) params.set('priceMax', filters.priceMax)
+        if (filters.isActive !== 'all') params.set('isActive', filters.isActive)
+        if (filters.dateFrom) params.set('dateFrom', filters.dateFrom)
+        if (filters.dateTo) params.set('dateTo', filters.dateTo)
+
+        const { data } = await api.get(`/products?${params}`)
+        dataToExport = data.products
+      }
+
+      if (dataToExport.length === 0) {
+        alert('No data to export')
+        return
+      }
+
+      const formattedData = formatProductsForExport(dataToExport)
+
+      if (options.format === 'csv') {
+        exportToCSV(formattedData, 'products')
+      } else {
+        // Filter columns based on visibility config if needed
+        // For now, we'll export all standard columns but we could filter PRODUCT_EXPORT_COLUMNS based on columnConfig
+        const visibleColumnIds = new Set(columnConfig.filter(c => c.isVisible).map(c => c.id))
+
+        // Map our internal column IDs to export keys
+        // Note: PRODUCT_EXPORT_COLUMNS uses 'sku', 'name' etc.
+        // columnConfig uses similar IDs.
+
+        // Let's filter the standard columns list based on what's visible in the table
+        // plus always include essential IDs if they were hidden (optional decision)
+
+        // For simplicity and "Creative" requirement, let's export the full defined set
+        // or filter it if the user really wants WYSIWYG.
+        // Requirement says "Yes" to respecting user column config.
+
+        const filteredColumns = PRODUCT_EXPORT_COLUMNS.filter(col => {
+           // Mapping some tricky ones
+           if (col.key === 'createdAt') return true // Always nice to have
+           if (col.key === 'isActive') return visibleColumnIds.has('isActive')
+           // Explicit cast or check since PRODUCT_EXPORT_COLUMNS keys might not match exactly ColumnId type
+           return visibleColumnIds.has(col.key as any)
+        })
+
+        // If filtering removed everything (unlikely), fallback to all
+        const columnsToUse = filteredColumns.length > 0 ? filteredColumns : PRODUCT_EXPORT_COLUMNS
+
+        await exportToExcel(formattedData, columnsToUse, 'products', 'Product Inventory')
+      }
+    } catch (error) {
+      console.error('Export failed', error)
+      alert('Failed to export data')
+    } finally {
+      setIsExporting(false)
     }
-    const formattedData = formatProductsForExport(products)
-    exportToCSV(formattedData, 'products')
   }
 
   // Calculate stock stats
@@ -735,8 +807,8 @@ export default function Products() {
               </select>
             </div>
           )}
-          <Button variant="secondary" onClick={handleExport}>
-            Export CSV
+          <Button variant="secondary" onClick={() => setIsExportMenuOpen(true)}>
+            Export
           </Button>
           <Button onClick={() => handleOpenModal()}>Add Product</Button>
         </div>
@@ -1223,6 +1295,16 @@ export default function Products() {
         onClose={() => setIsColumnConfigOpen(false)}
         currentConfig={columnConfig}
         onSave={handleSaveColumnConfig}
+      />
+
+      <ExportMenu
+        isOpen={isExportMenuOpen}
+        onClose={() => setIsExportMenuOpen(false)}
+        onExport={handleExport}
+        totalItems={productsData?.total || 0}
+        selectedCount={selectedIds.size}
+        entityName="Products"
+        isLoading={isExporting}
       />
     </div>
   )
