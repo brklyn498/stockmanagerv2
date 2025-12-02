@@ -76,20 +76,48 @@
 
 ## 🔄 Current Sprint
 
-**Working on:** Product Page Enhancements
+**Working on:** Telegram Bot Integration
 
 **Completed this session:**
-   - Implemented Stock Visualization components (`StockLevelBar`, `StockStatusBadge`).
-   - Integrated stock visualizers into Product List (Table & Card views).
-   - Integrated stock visualizers into Product Detail view.
-   - Added Stock Status summary to Products page header.
+   - Implemented **Phase T2: Product Commands**.
+   - Created `formatter.ts` for safe MarkdownV2 escaping and product card rendering.
+   - Implemented `productActionsKeyboard` and `paginationKeyboard`.
+   - Updated `/products` handler with pagination (10 items/page).
+   - Updated `/product [query]` handler to support rich single-product views with images and list views for multiple matches.
+   - Updated `/low` and `/out` commands with new rich formatting.
+   - Refactored `handleMenuCallback` to handle navigation and placeholders for future phases.
 
 **Next tasks:**
-1. Mobile Responsiveness (Section 8)
+1. Phase T3: Stock Management (Telegram Bot)
 
 ---
 
 ## 📝 Session Log
+
+### 2025-12-02 (Session 21 - Telegram Bot Phase T2)
+- Started: Implementation of Phase T2 (Product Commands)
+- Completed:
+  - **Formatting Utilities:**
+    - Created `apps/api/src/bot/utils/formatter.ts`
+    - Implemented `escapeMarkdownV2` for safe text rendering
+    - Implemented `formatProductCard` for detailed views
+    - Added helper functions for stock status emojis
+  - **Keyboards:**
+    - Created `apps/api/src/bot/keyboards/products.ts`
+    - Implemented pagination and product action keyboards
+  - **Handlers:**
+    - Refactored `productsHandler` to use new formatters and pagination
+    - Enhanced `productSearchHandler` to handle single vs multiple results
+    - Updated `lowStockHandler` and `outOfStockHandler`
+    - Added comprehensive callback handling in `callbacks.ts`
+  - **Image Handling:**
+    - Implemented robust local file handling using `fs.createReadStream`
+    - Logic correctly resolves relative `uploads/` paths to absolute disk paths
+- Verification:
+  - TypeScript compilation successful
+  - Logic verified against Prisma schema
+- Status: Phase T2 Complete
+- Next: Phase T3 (Stock Management)
 
 ### 2025-12-02 (Session 20 - Telegram Bot Integration Phase T1)
 - Started: Implementation of Telegram Bot Foundation (Phase T1 of TELEGRAM_BOT_ROADMAP.md)
