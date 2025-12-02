@@ -50,7 +50,7 @@ export async function lowStockHandler(ctx: BotContext) {
       orderBy: { quantity: 'asc' }
     });
 
-    const products = allProducts.filter(p =>
+    const products = allProducts.filter((p: any) =>
       p.minStock !== null && p.quantity <= p.minStock
     );
 
@@ -110,7 +110,7 @@ export async function productSearchHandler(ctx: BotContext, searchTerm: string) 
     });
 
     const searchLower = searchTerm.toLowerCase();
-    const products = allProducts.filter(p =>
+    const products = allProducts.filter((p: any) =>
       p.name.toLowerCase().includes(searchLower) ||
       p.sku.toLowerCase().includes(searchLower) ||
       (p.description && p.description.toLowerCase().includes(searchLower))
