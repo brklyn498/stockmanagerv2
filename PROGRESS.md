@@ -94,6 +94,21 @@
 
 ## 📝 Session Log
 
+### 2025-12-02 (Session 22 - Bug Fixes & Documentation)
+- Started: Debugging reported issues with product images and updating documentation.
+- Completed:
+  - **Product Image Deletion Fix:**
+    - Addressed Windows file locking issue in `apps/api/src/controllers/imageController.ts` by wrapping file deletion in try-catch blocks.
+    - Corrected API route mismatch: `imageRoutes` are now mounted at `/api/products` (was `/api/images`) in `apps/api/src/index.ts` to align with frontend requests.
+  - **Product Cards View Fix:**
+    - Fixed broken images in "Cards" view by replacing hardcoded `http://localhost:3001` with dynamic `API_URL` in `apps/web/src/components/ProductCard.tsx`.
+  - **Documentation:**
+    - Added `TELEGRAM_BOT_FUNCTIONS.md` to the repository.
+- Verification:
+  - Verified image deletion works correctly (UI updates even if file is locked).
+  - Verified images load correctly in Cards view on any port.
+- Status: Critical bugs resolved.
+
 ### 2025-12-02 (Session 21 - Telegram Bot Phase T2)
 - Started: Implementation of Phase T2 (Product Commands)
 - Completed:
