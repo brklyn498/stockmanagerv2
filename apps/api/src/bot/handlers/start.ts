@@ -1,4 +1,4 @@
-import { BotContext } from '../index';
+import type { BotContext } from '../types.ts';
 import prisma from '../../utils/db';
 import { getMainMenuKeyboard } from '../keyboards/main';
 

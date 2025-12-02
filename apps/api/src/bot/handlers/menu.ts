@@ -1,4 +1,4 @@
-import { BotContext } from '../index';
+import type { BotContext } from '../types.ts';
 import { getMainMenuInline } from '../keyboards/main';
 
 export async function menuHandler(ctx: BotContext) {

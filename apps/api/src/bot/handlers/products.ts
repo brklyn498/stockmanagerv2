@@ -1,4 +1,4 @@
-import { BotContext } from '../index';
+import type { BotContext } from '../types.ts';
 import prisma from '../../utils/db';
 import {
   formatProductList,
@@ -112,7 +112,7 @@ export async function outOfStockHandler(ctx: BotContext) {
     return ctx.reply(message, {
       parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard([
-         [Markup.button.callback('📦 View Products', 'products_list')]
+        [Markup.button.callback('📦 View Products', 'products_list')]
       ]).reply_markup
     });
   } catch (error) {
@@ -160,16 +160,16 @@ export async function productSearchHandler(ctx: BotContext, searchTerm: string) 
     }
 
     if (products.length > 5) {
-        message += `_...and ${products.length - 5} more. Try a more specific query._`;
+      message += `_...and ${products.length - 5} more. Try a more specific query._`;
     }
 
     const buttons = topResults.map(p => [
-        Markup.button.callback(p.name, `product_view_${p.id}`)
+      Markup.button.callback(p.name, `product_view_${p.id}`)
     ]);
 
     return ctx.reply(message, {
-        parse_mode: 'MarkdownV2',
-        reply_markup: Markup.inlineKeyboard(buttons).reply_markup
+      parse_mode: 'MarkdownV2',
+      reply_markup: Markup.inlineKeyboard(buttons).reply_markup
     });
   } catch (error) {
     console.error('Error in product search handler:', error);
@@ -178,73 +178,73 @@ export async function productSearchHandler(ctx: BotContext, searchTerm: string) 
 }
 
 export async function sendProductDetails(ctx: BotContext, product: any) {
-    try {
-        // Ensure product has all relations
-        if (!product.category || product.supplier === undefined) {
-             product = await prisma.product.findUnique({
-                 where: { id: product.id },
-                 include: { category: true, supplier: true }
-             });
-        }
-
-        const cardText = formatProductCard(product);
-        const keyboard = productActionsKeyboard(product.id);
-
-        // Handle Image
-        if (product.imageUrl) {
-            // Determine if it's a local upload or external URL
-            // Assuming local uploads start with /uploads/ or just filename
-            // And external URLs are full http/https
-
-            // NOTE: The user confirmed using fs.createReadStream for local files
-
-            const isExternal = product.imageUrl.startsWith('http');
-
-            if (isExternal) {
-                await ctx.replyWithPhoto(
-                    { url: product.imageUrl },
-                    {
-                        caption: cardText,
-                        parse_mode: 'MarkdownV2',
-                        reply_markup: keyboard.reply_markup
-                    }
-                );
-            } else {
-                // Local file handling
-                // The DB stores paths like 'uploads/filename.jpg' or '/uploads/filename.jpg'
-                // We need to resolve this to the absolute file path on disk
-
-                // Remove leading slash if present
-                const relativePath = product.imageUrl.startsWith('/') ? product.imageUrl.slice(1) : product.imageUrl;
-                const filePath = path.resolve(process.cwd(), relativePath);
-
-                if (fs.existsSync(filePath)) {
-                     await ctx.replyWithPhoto(
-                        { source: fs.createReadStream(filePath) },
-                        {
-                            caption: cardText,
-                            parse_mode: 'MarkdownV2',
-                            reply_markup: keyboard.reply_markup
-                        }
-                    );
-                } else {
-                     // Fallback if file not found
-                     console.warn(`Image file not found at: ${filePath}`);
-                     await ctx.reply(cardText, {
-                        parse_mode: 'MarkdownV2',
-                        reply_markup: keyboard.reply_markup
-                    });
-                }
-            }
-        } else {
-            // No image
-            await ctx.reply(cardText, {
-                parse_mode: 'MarkdownV2',
-                reply_markup: keyboard.reply_markup
-            });
-        }
-    } catch (error) {
-        console.error('Error sending product details:', error);
-        await ctx.reply('Error displaying product details.');
+  try {
+    // Ensure product has all relations
+    if (!product.category || product.supplier === undefined) {
+      product = await prisma.product.findUnique({
+        where: { id: product.id },
+        include: { category: true, supplier: true }
+      });
     }
+
+    const cardText = formatProductCard(product);
+    const keyboard = productActionsKeyboard(product.id);
+
+    // Handle Image
+    if (product.imageUrl) {
+      // Determine if it's a local upload or external URL
+      // Assuming local uploads start with /uploads/ or just filename
+      // And external URLs are full http/https
+
+      // NOTE: The user confirmed using fs.createReadStream for local files
+
+      const isExternal = product.imageUrl.startsWith('http');
+
+      if (isExternal) {
+        await ctx.replyWithPhoto(
+          { url: product.imageUrl },
+          {
+            caption: cardText,
+            parse_mode: 'MarkdownV2',
+            reply_markup: keyboard.reply_markup
+          }
+        );
+      } else {
+        // Local file handling
+        // The DB stores paths like 'uploads/filename.jpg' or '/uploads/filename.jpg'
+        // We need to resolve this to the absolute file path on disk
+
+        // Remove leading slash if present
+        const relativePath = product.imageUrl.startsWith('/') ? product.imageUrl.slice(1) : product.imageUrl;
+        const filePath = path.resolve(process.cwd(), relativePath);
+
+        if (fs.existsSync(filePath)) {
+          await ctx.replyWithPhoto(
+            { source: fs.createReadStream(filePath) },
+            {
+              caption: cardText,
+              parse_mode: 'MarkdownV2',
+              reply_markup: keyboard.reply_markup
+            }
+          );
+        } else {
+          // Fallback if file not found
+          console.warn(`Image file not found at: ${filePath}`);
+          await ctx.reply(cardText, {
+            parse_mode: 'MarkdownV2',
+            reply_markup: keyboard.reply_markup
+          });
+        }
+      }
+    } else {
+      // No image
+      await ctx.reply(cardText, {
+        parse_mode: 'MarkdownV2',
+        reply_markup: keyboard.reply_markup
+      });
+    }
+  } catch (error) {
+    console.error('Error sending product details:', error);
+    await ctx.reply('Error displaying product details.');
+  }
 }

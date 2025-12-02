@@ -1,16 +1,16 @@
 import { Telegraf, Scenes } from 'telegraf';
-import { startHandler } from './handlers/start';
-import { helpHandler } from './handlers/help';
-import { menuHandler } from './handlers/menu';
-import { handleMenuCallback } from './handlers/callbacks';
-import { productsHandler, lowStockHandler, outOfStockHandler, productSearchHandler } from './handlers/products';
-import { stockHandler, stockMovementsHandler, quickAddStockHandler, quickRemoveStockHandler } from './handlers/stock';
-import { ordersHandler } from './handlers/orders';
-import { reportsHandler } from './handlers/reports';
-import { settingsHandler } from './handlers/settings';
-import { prismaSession } from './middleware/session';
-import { BotContext } from './types';
-import { stockAdjustmentWizard } from './scenes/stockAdjustment';
+import { startHandler } from './handlers/start.ts';
+import { helpHandler } from './handlers/help.ts';
+import { menuHandler } from './handlers/menu.ts';
+import { handleMenuCallback } from './handlers/callbacks.ts';
+import { productsHandler, lowStockHandler, outOfStockHandler, productSearchHandler } from './handlers/products.ts';
+import { stockHandler, stockMovementsHandler, quickAddStockHandler, quickRemoveStockHandler } from './handlers/stock.ts';
+import { ordersHandler } from './handlers/orders.ts';
+import { reportsHandler } from './handlers/reports.ts';
+import { settingsHandler } from './handlers/settings.ts';
+import { prismaSession } from './middleware/session.ts';
+import type { BotContext } from './types.ts';
+import { stockAdjustmentWizard } from './scenes/stockAdjustment.ts';
 
 export { BotContext };
 

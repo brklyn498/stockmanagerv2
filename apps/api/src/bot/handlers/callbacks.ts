@@ -1,4 +1,4 @@
-import { BotContext } from '../index';
+import type { BotContext } from '../types.ts';
 import { helpHandler } from './help';
 import { productsHandler } from './products';
 import { stockHandler } from './stock';
@@ -63,44 +63,44 @@ export async function handleMenuCallback(ctx: BotContext) {
   // Product View: product_view_ID
   const viewMatch = callbackData.match(/^product_view_(.+)$/);
   if (viewMatch) {
-      const productId = viewMatch[1];
-      const product = await prisma.product.findUnique({
-          where: { id: productId },
-          include: { category: true, supplier: true }
-      });
+    const productId = viewMatch[1];
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { category: true, supplier: true }
+    });
 
-      if (product) {
-          // Delete the previous message to clean up chat if user came from search list
-          // await ctx.deleteMessage().catch(() => {});
-          // Actually, keeping history is often better. Let's send a new message.
-          return sendProductDetails(ctx, product);
-      } else {
-          return ctx.reply('Product not found.');
-      }
+    if (product) {
+      // Delete the previous message to clean up chat if user came from search list
+      // await ctx.deleteMessage().catch(() => {});
+      // Actually, keeping history is often better. Let's send a new message.
+      return sendProductDetails(ctx, product);
+    } else {
+      return ctx.reply('Product not found.');
+    }
   }
 
   // Placeholders for Phase T3/T4
   if (callbackData.startsWith('stock_add_') ||
-      callbackData.startsWith('stock_remove_') ||
-      callbackData.startsWith('product_edit_') ||
-      callbackData.startsWith('product_history_')) {
-      return ctx.reply('🚧 This feature is coming in Phase T3 (Stock Management)!');
+    callbackData.startsWith('stock_remove_') ||
+    callbackData.startsWith('product_edit_') ||
+    callbackData.startsWith('product_history_')) {
+    return ctx.reply('🚧 This feature is coming in Phase T3 (Stock Management)!');
   }
 
   if (callbackData === 'products_search') {
-      return ctx.reply('🔍 To search, type: /product [name or sku]');
+    return ctx.reply('🔍 To search, type: /product [name or sku]');
   }
 
   if (callbackData === 'products_low') {
-      // Use the existing lowStockHandler logic but via callback
-      // We need to import it or redirect flow.
-      // Redirecting via imported handler:
-      const { lowStockHandler } = await import('./products');
-      return lowStockHandler(ctx);
+    // Use the existing lowStockHandler logic but via callback
+    // We need to import it or redirect flow.
+    // Redirecting via imported handler:
+    const { lowStockHandler } = await import('./products');
+    return lowStockHandler(ctx);
   }
 
   if (callbackData === 'noop') {
-      return; // Do nothing
+    return; // Do nothing
   }
 
   // Fallback

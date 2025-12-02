@@ -1,6 +1,6 @@
 import { Context, Middleware } from 'telegraf';
-import prisma from '../../utils/db';
-import { BotContext, SessionData } from '../types';
+import prisma from '../../utils/db.ts';
+import type { BotContext, SessionData } from '../types.ts';
 
 export function prismaSession(): Middleware<BotContext> {
   return async (ctx, next) => {

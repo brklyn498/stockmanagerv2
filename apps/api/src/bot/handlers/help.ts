@@ -1,4 +1,4 @@
-import { BotContext } from '../index';
+import type { BotContext } from '../types.ts';
 
 export async function helpHandler(ctx: BotContext) {
   const helpMessage = `📚 *Stock Manager Bot - Help*

@@ -1,4 +1,4 @@
-import { BotContext } from '../index';
+import type { BotContext } from '../types.ts';
 
 export async function ordersHandler(ctx: BotContext) {
   return ctx.reply(

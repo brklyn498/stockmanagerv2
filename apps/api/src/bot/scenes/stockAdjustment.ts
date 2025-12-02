@@ -1,9 +1,9 @@
 import { Scenes, Markup } from 'telegraf';
-import { BotContext } from '../types';
+import type { BotContext } from '../types.ts';
 import prisma from '../../utils/db';
-import { decodeBarcodeFromUrl } from '../utils/barcode';
-import { getSystemBotUser } from '../utils/systemUser';
-import { escapeMarkdownV2 } from '../utils/formatter';
+import { decodeBarcodeFromUrl } from '../utils/barcode.ts';
+import { getSystemBotUser } from '../utils/systemUser.ts';
+import { escapeMarkdownV2 } from '../utils/formatter.ts';
 
 export const stockAdjustmentWizard = new Scenes.WizardScene<BotContext>(
   'stock-adjustment',
@@ -33,9 +33,9 @@ export const stockAdjustmentWizard = new Scenes.WizardScene<BotContext>(
       if (barcode) {
         product = await prisma.product.findUnique({ where: { barcode } });
         if (!product) {
-           await ctx.reply(`🔍 Barcode detected: \`${barcode}\`, but no product found.`, { parse_mode: 'MarkdownV2' });
-           // Could ask to search manually, but for now just stay here
-           return;
+          await ctx.reply(`🔍 Barcode detected: \`${barcode}\`, but no product found.`, { parse_mode: 'MarkdownV2' });
+          // Could ask to search manually, but for now just stay here
+          return;
         }
       } else {
         await ctx.reply('❌ Could not read barcode. Please try entering SKU or Name.', { parse_mode: 'MarkdownV2' });
@@ -122,9 +122,9 @@ export const stockAdjustmentWizard = new Scenes.WizardScene<BotContext>(
       await ctx.reply(`Enter quantity to ${type}:`);
       return ctx.wizard.next();
     } else {
-        // If they typed something instead of clicking
-        await ctx.reply('Please use the buttons above.');
-        return;
+      // If they typed something instead of clicking
+      await ctx.reply('Please use the buttons above.');
+      return;
     }
   },
 
@@ -143,11 +143,11 @@ export const stockAdjustmentWizard = new Scenes.WizardScene<BotContext>(
     await ctx.reply(
       'Reason for adjustment?',
       Markup.inlineKeyboard([
-          [Markup.button.callback('📦 Shipment', 'reason_shipment')],
-          [Markup.button.callback('📝 Audit', 'reason_audit')],
-          [Markup.button.callback('🗑️ Damaged', 'reason_damaged')],
-          [Markup.button.callback('↩️ Return', 'reason_return')],
-          [Markup.button.callback('Skip', 'reason_skip')]
+        [Markup.button.callback('📦 Shipment', 'reason_shipment')],
+        [Markup.button.callback('📝 Audit', 'reason_audit')],
+        [Markup.button.callback('🗑️ Damaged', 'reason_damaged')],
+        [Markup.button.callback('↩️ Return', 'reason_return')],
+        [Markup.button.callback('Skip', 'reason_skip')]
       ])
     );
     return ctx.wizard.next();
@@ -158,15 +158,15 @@ export const stockAdjustmentWizard = new Scenes.WizardScene<BotContext>(
     let reason = 'Stock Adjustment';
 
     if (ctx.callbackQuery && 'data' in ctx.callbackQuery) {
-        const data = ctx.callbackQuery.data;
-        if (data.startsWith('reason_')) {
-            reason = data.replace('reason_', '');
-            if (reason === 'skip') reason = 'Stock Adjustment';
-            else reason = reason.charAt(0).toUpperCase() + reason.slice(1);
-            await ctx.answerCbQuery();
-        }
+      const data = ctx.callbackQuery.data;
+      if (data.startsWith('reason_')) {
+        reason = data.replace('reason_', '');
+        if (reason === 'skip') reason = 'Stock Adjustment';
+        else reason = reason.charAt(0).toUpperCase() + reason.slice(1);
+        await ctx.answerCbQuery();
+      }
     } else if ((ctx.message as any)?.text) {
-        reason = (ctx.message as any).text;
+      reason = (ctx.message as any).text;
     }
 
     const state = ctx.wizard.state as any;
@@ -180,53 +180,53 @@ export const stockAdjustmentWizard = new Scenes.WizardScene<BotContext>(
     let type = 'ADJUSTMENT'; // DB Enum: IN, OUT, ADJUSTMENT... schema says String.
 
     if (actionType === 'add') {
-        newQuantity += quantity;
-        change = quantity;
-        type = 'IN';
+      newQuantity += quantity;
+      change = quantity;
+      type = 'IN';
     } else if (actionType === 'remove') {
-        newQuantity -= quantity;
-        change = -quantity;
-        type = 'OUT';
+      newQuantity -= quantity;
+      change = -quantity;
+      type = 'OUT';
     } else if (actionType === 'set') {
-        newQuantity = quantity;
-        change = quantity - currentStock;
-        type = 'ADJUSTMENT';
+      newQuantity = quantity;
+      change = quantity - currentStock;
+      type = 'ADJUSTMENT';
     }
 
     try {
-        await prisma.$transaction([
-            prisma.product.update({
-                where: { id: productId },
-                data: { quantity: newQuantity }
-            }),
-            prisma.stockMovement.create({
-                data: {
-                    type,
-                    quantity: Math.abs(change),
-                    reason,
-                    productId,
-                    userId: systemUser.id
-                }
-            })
-        ]);
+      await prisma.$transaction([
+        prisma.product.update({
+          where: { id: productId },
+          data: { quantity: newQuantity }
+        }),
+        prisma.stockMovement.create({
+          data: {
+            type,
+            quantity: Math.abs(change),
+            reason,
+            productId,
+            userId: systemUser.id
+          }
+        })
+      ]);
 
-        await ctx.reply(
-            `✅ *Adjustment Complete*\n\n` +
-            `📦 ${escapeMarkdownV2(productName)}\n` +
-            `Old Stock: ${currentStock}\n` +
-            `New Stock: ${newQuantity}\n` +
-            `Reason: ${escapeMarkdownV2(reason)}`,
-            {
-                parse_mode: 'MarkdownV2',
-                reply_markup: Markup.inlineKeyboard([
-                    [Markup.button.callback('🔄 Adjust Another', 'stock_start_adjust')], // We need to handle this callback or just command
-                    [Markup.button.callback('🔙 Menu', 'menu_stock')]
-                ]).reply_markup
-            }
-        );
+      await ctx.reply(
+        `✅ *Adjustment Complete*\n\n` +
+        `📦 ${escapeMarkdownV2(productName)}\n` +
+        `Old Stock: ${currentStock}\n` +
+        `New Stock: ${newQuantity}\n` +
+        `Reason: ${escapeMarkdownV2(reason)}`,
+        {
+          parse_mode: 'MarkdownV2',
+          reply_markup: Markup.inlineKeyboard([
+            [Markup.button.callback('🔄 Adjust Another', 'stock_start_adjust')], // We need to handle this callback or just command
+            [Markup.button.callback('🔙 Menu', 'menu_stock')]
+          ]).reply_markup
+        }
+      );
     } catch (e) {
-        console.error('Adjustment error:', e);
-        await ctx.reply('❌ Failed to update stock.');
+      console.error('Adjustment error:', e);
+      await ctx.reply('❌ Failed to update stock.');
     }
 
     return ctx.scene.leave();
@@ -235,6 +235,6 @@ export const stockAdjustmentWizard = new Scenes.WizardScene<BotContext>(
 
 // Exit handler
 stockAdjustmentWizard.command('cancel', async (ctx) => {
-    await ctx.reply('❌ Adjustment cancelled.');
-    return ctx.scene.leave();
+  await ctx.reply('❌ Adjustment cancelled.');
+  return ctx.scene.leave();
 });

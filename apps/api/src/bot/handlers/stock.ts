@@ -1,4 +1,4 @@
-import { BotContext } from '../index';
+import type { BotContext } from '../types.ts';
 import prisma from '../../utils/db';
 import { stockMenuKeyboard, stockMovementsKeyboard } from '../keyboards/stock';
 import { escapeMarkdownV2, formatRelativeTime } from '../utils/formatter';

@@ -22,7 +22,7 @@ import { initializeBot } from './bot'
 dotenv.config()
 
 const app = express()
-const PORT = process.env.API_PORT || 3001
+const PORT = process.env.API_PORT || 3101
 
 // Set timeout for all requests (30 seconds)
 app.use((req, res, next) => {
@@ -179,4 +179,4 @@ process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) =>
   // DO NOT exit: process.exit(1)
 })
 
-console.log('🛡️  Global error handlers installed - server is crash-proof ')
+console.log('🛡️  Global error handlers installed - server is crash-proof')
