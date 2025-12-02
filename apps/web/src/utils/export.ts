@@ -3,7 +3,6 @@
  * Handles data export to CSV and Excel formats
  */
 import * as ExcelJS from 'exceljs'
-import { saveAs } from 'file-saver'
 
 type ExportData = Record<string, any>[]
 
@@ -11,6 +10,26 @@ export interface ExportColumn {
   header: string
   key: string
   width?: number
+}
+
+/**
+ * Helper function to trigger file download using native browser APIs
+ */
+function downloadFile(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.style.display = 'none'
+
+  document.body.appendChild(link)
+  link.click()
+
+  // Clean up
+  setTimeout(() => {
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }, 100)
 }
 
 /**
@@ -70,7 +89,7 @@ export function exportToCSV(
   // Add BOM for Excel UTF-8 compatibility
   const BOM = '\uFEFF'
   const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
-  saveAs(blob, fullFilename)
+  downloadFile(blob, fullFilename)
 }
 
 /**
@@ -155,7 +174,7 @@ export async function exportToExcel(
   const fullFilename = `${filename}_${timestamp}.xlsx`
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
 
-  saveAs(blob, fullFilename)
+  downloadFile(blob, fullFilename)
 }
 
 /**

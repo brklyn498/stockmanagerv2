@@ -661,9 +661,12 @@ export default function Products() {
 
         await exportToExcel(formattedData, columnsToUse, 'products', 'Product Inventory')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Export failed', error)
-      alert('Failed to export data')
+      const errorMessage = error?.code === 'ECONNABORTED'
+        ? 'Export timed out. Try exporting fewer records or use filters to narrow down the data.'
+        : error?.message || 'Failed to export data. Please try again.'
+      alert(errorMessage)
     } finally {
       setIsExporting(false)
     }
