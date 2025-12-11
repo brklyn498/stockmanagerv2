@@ -91,6 +91,7 @@ export const getSalesReport = async (req: Request, res: Response) => {
             },
             include: {
                 user: true,
+                client: true,
                 items: {
                     include: {
                         product: true,
@@ -106,7 +107,7 @@ export const getSalesReport = async (req: Request, res: Response) => {
             id: order.id,
             orderNumber: order.orderNumber,
             date: order.createdAt,
-            customer: 'Walk-in Customer', // TODO: Add customer support if needed
+            customer: order.client?.name || 'Walk-in Customer',
             itemsCount: order.items.length,
             totalAmount: order.totalAmount,
         }));

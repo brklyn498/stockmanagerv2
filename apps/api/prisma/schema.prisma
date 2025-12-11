@@ -55,6 +55,8 @@ model Client {
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  orders    Order[]
 }
 
 model Product {
@@ -125,6 +127,9 @@ model Order {
 
   supplierId  String?
   supplier    Supplier? @relation(fields: [supplierId], references: [id])
+
+  clientId    String?
+  client      Client?   @relation(fields: [clientId], references: [id])
 
   userId      String
   user        User     @relation(fields: [userId], references: [id])

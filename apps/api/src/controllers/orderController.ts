@@ -24,6 +24,7 @@ export const getOrders = async (req: AuthRequest, res: Response): Promise<void> 
         { orderNumber: { contains: search as string } },
         { notes: { contains: search as string } },
         { supplier: { name: { contains: search as string } } },
+        { client: { name: { contains: search as string } } },
       ]
     }
 
@@ -31,6 +32,7 @@ export const getOrders = async (req: AuthRequest, res: Response): Promise<void> 
       where,
       include: {
         supplier: true,
+        client: true,
         user: {
           select: {
             id: true,
@@ -68,6 +70,7 @@ export const getOrder = async (req: AuthRequest, res: Response): Promise<void> =
       where: { id },
       include: {
         supplier: true,
+        client: true,
         user: {
           select: {
             id: true,
@@ -120,7 +123,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
       userId = demoUser.id
     }
 
-    const { type, supplierId, notes, items } = req.body
+    const { type, supplierId, clientId, notes, items } = req.body
 
     // Calculate total amount
     const totalAmount = items.reduce(
@@ -137,6 +140,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
         orderNumber,
         type,
         supplierId,
+        clientId,
         notes,
         totalAmount,
         userId,
@@ -146,6 +150,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
       },
       include: {
         supplier: true,
+        client: true,
         items: {
           include: {
             product: true,
@@ -248,6 +253,7 @@ export const updateOrderStatus = async (
       where: { id },
       include: {
         supplier: true,
+        client: true,
         items: {
           include: {
             product: true,
